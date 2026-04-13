@@ -54,6 +54,7 @@ void AppDelegate::initGfxContextAttrs()
 
 bool AppDelegate::applicationDidFinishLaunching()
 {
+    AXLOGD("Debug mode enabled");
     // initialize director
     auto director = Director::getInstance();
     auto renderView   = director->getRenderView();

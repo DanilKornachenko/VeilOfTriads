@@ -23,8 +23,9 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include "MainScene.h"
 #include "GameScene.h"
+#include "FieldOfGems.h"
+#include <unordered_map>
 
 using namespace ax;
 
@@ -36,11 +37,11 @@ static void problemLoading(const char* filename)
     printf("Error while loading: %s\n", filename);
     printf(
         "Depending on how you compiled you might have to add 'Content/' in front of filenames in "
-        "MainScene.cpp\n");
+        "GameScene.cpp\n");
 }
 
 // on "init" you need to initialize your instance
-bool MainScene::init()
+bool GameScene::init()
 {
     //////////////////////////////
     // 1. super init first
@@ -60,7 +61,7 @@ bool MainScene::init()
 
     // add a "close" icon to exit the progress. it's an autorelease object
     auto closeItem = MenuItemImage::create("CloseNormal.png", "CloseSelected.png",
-                                           AX_CALLBACK_1(MainScene::menuCloseCallback, this));
+                                           AX_CALLBACK_1(GameScene::menuCloseCallback, this));
 
     if (closeItem == nullptr || closeItem->getContentSize().width <= 0 || closeItem->getContentSize().height <= 0)
     {
@@ -79,51 +80,56 @@ bool MainScene::init()
     this->addChild(menu, 1);
 
     /////////////////////////////
-    // add a menu item to go in another scene
+    // Draw Field
+    /*
+    int gridCols = 10;
+    int gridRows = 20;
 
-    // add a "next" icon
-    auto nextItem = MenuItemImage::create(
-        "res/Colored gems/red/gem_red_big_4x.png",
-        "res/Colored gems/red/gem_red_big_4x.png",
-        AX_CALLBACK_1(MainScene::goToGameScene,
-        this));
+    float cellSize = (visibleSize.height * 0.9f) / gridRows;
 
-    if (nextItem == nullptr || nextItem->getContentSize().width <= 0 || nextItem->getContentSize().height <= 0)
-    {
-      problemLoading("'res/Colored gems/red/gem_red_big_4x.png' and 'res/Colored gems/red/gem_red_big_4x.png'");
+    float gridWidth = gridCols * cellSize;
+    float gridHeight = gridRows * cellSize;
+    float startX = origin.x + (visibleSize.width - gridWidth) * 0.5f;
+    float startY = origin.y + (visibleSize.height - gridHeight) * 0.5f;
+
+    auto drawNode = DrawNode::create();
+    drawNode->setPosition(Vec2::ZERO); // Позиция узла в его родительской системе координат
+
+    Color4F whiteColor(1.0f, 1.0f, 1.0f, 1.0f); // RGBA
+
+    for (int row = 0; row < gridRows; ++row) {
+        for (int col = 0; col < gridCols; ++col) {
+            float x = startX + col * cellSize;
+            float y = startY + row * cellSize;
+            Vec2 origin(x, y);
+            Vec2 destination(x + cellSize, y + cellSize);
+            drawNode->drawRect(origin, destination, whiteColor);
+        }
     }
-    else
-    {
-      float x = origin.x / 2;
-      float y = (origin.y / 2) - 150;
-      nextItem->setPosition(Vec2(x, y));
-    }
 
-    // Create button
-    auto menuNext = Menu::create(nextItem, NULL);
-    menu->setPosition(Vec2::ZERO);
-    this->addChild(menuNext, 1);
-
+    this->addChild(drawNode);
+    */
+    setupGrid();
     /////////////////////////////
     // 3. add your codes below...
 
     // Some templates (uncomment what you  need)
     _touchListener                 = EventListenerTouchAllAtOnce::create();
-    _touchListener->onTouchesBegan = AX_CALLBACK_2(MainScene::onTouchesBegan, this);
-    _touchListener->onTouchesMoved = AX_CALLBACK_2(MainScene::onTouchesMoved, this);
-    _touchListener->onTouchesEnded = AX_CALLBACK_2(MainScene::onTouchesEnded, this);
+    _touchListener->onTouchesBegan = AX_CALLBACK_2(GameScene::onTouchesBegan, this);
+    _touchListener->onTouchesMoved = AX_CALLBACK_2(GameScene::onTouchesMoved, this);
+    _touchListener->onTouchesEnded = AX_CALLBACK_2(GameScene::onTouchesEnded, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(_touchListener, this);
 
     _mouseListener                = EventListenerMouse::create();
-    _mouseListener->onMouseMove   = AX_CALLBACK_1(MainScene::onMouseMove, this);
-    _mouseListener->onMouseUp     = AX_CALLBACK_1(MainScene::onMouseUp, this);
-    _mouseListener->onMouseDown   = AX_CALLBACK_1(MainScene::onMouseDown, this);
-    //_mouseListener->onMouseScroll = AX_CALLBACK_1(MainScene::onMouseScroll, this);
+    _mouseListener->onMouseMove   = AX_CALLBACK_1(GameScene::onMouseMove, this);
+    _mouseListener->onMouseUp     = AX_CALLBACK_1(GameScene::onMouseUp, this);
+    _mouseListener->onMouseDown   = AX_CALLBACK_1(GameScene::onMouseDown, this);
+    _mouseListener->onMouseScroll = AX_CALLBACK_1(GameScene::onMouseScroll, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(_mouseListener, this);
 
     _keyboardListener                = EventListenerKeyboard::create();
-    _keyboardListener->onKeyPressed  = AX_CALLBACK_2(MainScene::onKeyPressed, this);
-    _keyboardListener->onKeyReleased = AX_CALLBACK_2(MainScene::onKeyReleased, this);
+    _keyboardListener->onKeyPressed  = AX_CALLBACK_2(GameScene::onKeyPressed, this);
+    _keyboardListener->onKeyReleased = AX_CALLBACK_2(GameScene::onKeyReleased, this);
     _eventDispatcher->addEventListenerWithFixedPriority(_keyboardListener, 11);
 
     // add a label shows "Hello World"
@@ -143,25 +149,6 @@ bool MainScene::init()
         // add the label as a child to this layer
         this->addChild(label, 1);
     }
-    // add "HelloWorld" splash screen"
-    auto sprite = Sprite::create("HelloWorld.png"sv);
-    if (sprite == nullptr)
-    {
-        problemLoading("'HelloWorld.png'");
-    }
-    else
-    {
-        // position the sprite on the center of the screen
-        sprite->setPosition(Vec2(visibleSize.width / 2 + origin.x, visibleSize.height / 2 + origin.y));
-
-        // add the sprite as a child to this layer
-        this->addChild(sprite, 0);
-        auto drawNode = DrawNode::create();
-        drawNode->setPosition(Vec2(0, 0));
-        addChild(drawNode);
-
-        drawNode->drawRect(safeArea.origin + Vec2(1, 1), safeArea.origin + safeArea.size, Color4F::BLUE);
-    }
 
     // scheduleUpdate() is required to ensure update(float) is called on every loop
     scheduleUpdate();
@@ -169,15 +156,40 @@ bool MainScene::init()
     return true;
 }
 
-void MainScene::onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event* event)
+Vec2 GameScene::touchToGridIndex(const Vec2& touchLocation)
+{
+  if (touchLocation.x < _gridStartPos.x ||
+      touchLocation.x > _gridStartPos.x + _gridCols * _cellSize ||
+      touchLocation.y < _gridStartPos.y ||
+      touchLocation.y > _gridStartPos.y + _gridRows * _cellSize)
+  {
+    return Vec2(-1, -1); // За пределами
+  }
+
+  int col = static_cast<int>((touchLocation.x - _gridStartPos.x) / _cellSize);
+  int row = static_cast<int>((touchLocation.y - _gridStartPos.y) / _cellSize);
+  return Vec2(col, row);
+}
+
+void GameScene::onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event* event)
 {
     for (auto&& t : touches)
     {
         AXLOGD("onTouchesBegan detected, X:{}  Y:{}", t->getLocation().x, t->getLocation().y);
+        Vec2 location = t->getLocation();
+        Vec2 index = touchToGridIndex(location);
+        if (index.x >= 0 && index.y >= 0)
+        {
+          int col = static_cast<int>(index.x);
+          int row = static_cast<int>(index.y);
+
+          _field.click(row, col);
+          redrawGrid();
+        }
     }
 }
 
-void MainScene::onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event* event)
+void GameScene::onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event* event)
 {
     for (auto&& t : touches)
     {
@@ -185,7 +197,7 @@ void MainScene::onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event
     }
 }
 
-void MainScene::onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event* event)
+void GameScene::onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event* event)
 {
     for (auto&& t : touches)
     {
@@ -193,45 +205,56 @@ void MainScene::onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event
     }
 }
 
-bool MainScene::onMouseDown(Event* event)
+bool GameScene::onMouseDown(Event* event)
 {
     EventMouse* e = static_cast<EventMouse*>(event);
+    Vec2 location = e->getLocationInView();
+    location = _director->convertToGL(location);
+
+    Vec2 index = touchToGridIndex(location);
+    if (index.x >= 0 && index.y >= 0)
+    {
+      int col = static_cast<int>(index.x);
+      int row = static_cast<int>(index.y);
+      _field.click(row, col);
+      redrawGrid();
+    }
     AXLOGD("onMouseDown detected, button: {}", static_cast<int>(e->getMouseButton()));
     return true;
 }
 
-bool MainScene::onMouseUp(Event* event)
+bool GameScene::onMouseUp(Event* event)
 {
     EventMouse* e = static_cast<EventMouse*>(event);
     AXLOGD("onMouseUp detected, button: {}", static_cast<int>(e->getMouseButton()));
     return true;
 }
 
-bool MainScene::onMouseMove(Event* event)
+bool GameScene::onMouseMove(Event* event)
 {
     EventMouse* e = static_cast<EventMouse*>(event);
     AXLOGD("onMouseMove detected, X:{}  Y:{}", e->getLocation().x, e->getLocation().y);
     return true;
 }
 
-bool MainScene::onMouseScroll(Event* event)
+bool GameScene::onMouseScroll(Event* event)
 {
     EventMouse* e = static_cast<EventMouse*>(event);
     // AXLOGD("onMouseScroll detected, X:{}  Y:{}", e->getScrollX(), e->getScrollY());
     return true;
 }
 
-void MainScene::onKeyPressed(EventKeyboard::KeyCode code, Event* event)
+void GameScene::onKeyPressed(EventKeyboard::KeyCode code, Event* event)
 {
     AXLOGD("Scene: #{} onKeyPressed, keycode: {}", _sceneID, static_cast<int>(code));
 }
 
-void MainScene::onKeyReleased(EventKeyboard::KeyCode code, Event* event)
+void GameScene::onKeyReleased(EventKeyboard::KeyCode code, Event* event)
 {
     AXLOGD("onKeyReleased, keycode: {}", static_cast<int>(code));
 }
 
-void MainScene::update(float delta)
+void GameScene::update(float delta)
 {
     switch (_gameState)
     {
@@ -291,7 +314,7 @@ void MainScene::update(float delta)
     }  // switch
 }
 
-void MainScene::menuCloseCallback(ax::Object* sender)
+void GameScene::menuCloseCallback(ax::Object* sender)
 {
     // Close the axmol game scene and quit the application
     _director->end();
@@ -304,19 +327,68 @@ void MainScene::menuCloseCallback(ax::Object* sender)
     //_eventDispatcher->dispatchEvent(&customEndEvent);
 }
 
-void MainScene::goToGameScene(ax::Object* sender)
+void GameScene::setupGrid()
 {
-  auto gameScene = utils::createInstance<GameScene>();
-  _director->replaceScene(gameScene);
+  auto visibleSize = _director->getVisibleSize();
+  auto origin = _director->getVisibleOrigin();
+
+  _cellSize = (visibleSize.height * 0.9f) / _gridRows;
+  float gridWidth = _gridCols * _cellSize;
+  float gridHeight = _gridRows * _cellSize;
+  _gridStartPos.x = origin.x + (visibleSize.width - gridWidth) * 0.5f;
+  _gridStartPos.y = origin.y + (visibleSize.height - gridHeight) * 0.5f;
+
+  _gridDrawNode = DrawNode::create();
+  _gridDrawNode->setPosition(Vec2::ZERO);
+  this->addChild(_gridDrawNode);
+
+  redrawGrid();
 }
 
-MainScene::MainScene()
+void GameScene::redrawGrid()
+{
+  _gridDrawNode->clear();
+  auto field = _field.readField();
+
+  static std::unordered_map<char, Color4F> colorMap = {
+    {FieldOfGems::yellow,   Color4F(1.0f, 1.0f, 0.0f, 1.0f)},
+    {FieldOfGems::red,      Color4F(1.0f, 0.0f, 0.0f, 1.0f)},
+    {FieldOfGems::purple,   Color4F(0.8f, 0.0f, 0.8f, 1.0f)},
+    {FieldOfGems::orange,   Color4F(1.0f, 0.5f, 0.0f, 1.0f)},
+    {FieldOfGems::green,    Color4F(0.0f, 1.0f, 0.0f, 1.0f)},
+    {FieldOfGems::blue,     Color4F(0.0f, 0.0f, 1.0f, 1.0f)},
+    {FieldOfGems::nothing, Color4F(0.0f, 0.0f, 0.0f, 0.0f)}
+  };
+
+  for (int r = 0; r < _gridRows; ++r)
+  {
+    for (int c = 0; c < _gridCols; ++c)
+    {
+      float x = _gridStartPos.x + c * _cellSize;
+      float y = _gridStartPos.y + r * _cellSize;
+      Vec2 origin(x, y);
+      Vec2 dest(x + _cellSize, y + _cellSize);
+
+      char gemChar = field[r][c];
+      Color4F color = colorMap[gemChar];
+
+      _gridDrawNode->drawRect(origin, dest, Color4F::WHITE);
+
+      if (gemChar != FieldOfGems::nothing)
+      {
+        _gridDrawNode->drawSolidRect(origin, dest, color);
+      }
+    }
+  }
+}
+
+GameScene::GameScene()
 {
     _sceneID = ++s_sceneID;
     AXLOGD("Scene: ctor: #{}", _sceneID);
 }
 
-MainScene::~MainScene()
+GameScene::~GameScene()
 {
     AXLOGD("~Scene: dtor: #{}", _sceneID);
 

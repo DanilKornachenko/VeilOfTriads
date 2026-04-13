@@ -26,8 +26,9 @@
 #pragma once
 
 #include "axmol.h"
+#include "FieldOfGems.h"
 
-class MainScene : public ax::Scene
+class GameScene : public ax::Scene
 {
     enum class GameState
     {
@@ -60,10 +61,9 @@ public:
 
     // a selector callback
     void menuCloseCallback(ax::Object* sender);
-    void goToGameScene(ax::Object* sender);
 
-    MainScene();
-    ~MainScene() override;
+    GameScene();
+    ~GameScene() override;
 
 private:
     GameState _gameState                            = GameState::init;
@@ -71,5 +71,16 @@ private:
     ax::EventListenerKeyboard* _keyboardListener    = nullptr;
     ax::EventListenerMouse* _mouseListener          = nullptr;
     int _sceneID                                    = 0;
+
+    ax::DrawNode* _gridDrawNode = nullptr;
+    FieldOfGems _field;
+    int _gridRows = 20;
+    int _gridCols = 10;
+    float _cellSize = 0.0f;
+    ax::Vec2 _gridStartPos; // Левый нижний угол сетки
+
+    void setupGrid();
+    void redrawGrid();
+    ax::Vec2 touchToGridIndex(const ax::Vec2& touchLocation);
 };
 
