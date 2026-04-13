@@ -1,19 +1,114 @@
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-CMakeUserPresets.json
+# CMake generated
+VeilOfTriads/CMakeLists.txt.user
+VeilOfTriads/CMakeCache.txt
+VeilOfTriads/CMakeFiles/
+VeilOfTriads/CMakeScripts/
+VeilOfTriads/Testing/
+VeilOfTriads/Makefile
+VeilOfTriads/cmake_install.cmake
+VeilOfTriads/install_manifest.txt
+VeilOfTriads/compile_commands.json
+VeilOfTriads/CTestTestfile.cmake
+VeilOfTriads/_deps/
+VeilOfTriads/CMakeUserPresets.json
 
-# CLion
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#cmake-build-*
+# IDEs
+VeilOfTriads/.idea/
+VeilOfTriads/.vscode/
+VeilOfTriads/*.swp
+VeilOfTriads/*~.nib
+VeilOfTriads/*.sublime-workspace
+VeilOfTriads/*.sublime-project
+
+# Build directories (common names)
+VeilOfTriads/build/
+VeilOfTriads/build-*/
+VeilOfTriads/bin/
+VeilOfTriads/Bin/
+VeilOfTriads/Debug/
+VeilOfTriads/Release/
+VeilOfTriads/_out/
+VeilOfTriads/dist/
+VeilOfTriads/_intermediates/
+VeilOfTriads/intermediates/
+VeilOfTriads/obj/
+VeilOfTriads/objs/
+
+# C/C++ specific generated files
+VeilOfTriads/*.o
+VeilOfTriads/*.obj
+VeilOfTriads/*.so
+VeilOfTriads/*.a
+VeilOfTriads/*.lib
+VeilOfTriads/*.dll
+VeilOfTriads/*.dylib
+VeilOfTriads/*.exe
+
+# Web / emscripten
+VeilOfTriads/*.html
+VeilOfTriads/*.js
+VeilOfTriads/*.wasm
+VeilOfTriads/*.mem
+VeilOfTriads/build/web/
+VeilOfTriads/proj.web/
+
+# Axmol / Cocos2d-x specific folders
+VeilOfTriads/proj.win32/build/
+VeilOfTriads/proj.win32/Debug/
+VeilOfTriads/proj.win32/Release/
+VeilOfTriads/proj.android-studio/
+VeilOfTriads/proj.android/
+VeilOfTriads/proj.ios_mac/xcbuild/
+VeilOfTriads/proj.ios/
+VeilOfTriads/proj.mac/
+VeilOfTriads/proj.linux/
+VeilOfTriads/proj.web/
+VeilOfTriads/frameworks/runtime-src/proj.android-studio/
+VeilOfTriads/frameworks/runtime-src/proj.ios_mac/
+VeilOfTriads/frameworks/runtime-src/proj.win32/
+
+# Resource caches and generated asset files
+VeilOfTriads/*.pvr
+VeilOfTriads/*.pvr.ccz
+VeilOfTriads/*.pkm
+VeilOfTriads/*.astc
+VeilOfTriads/*.tmx~ 
+VeilOfTriads/*.plist~
+VeilOfTriads/*.import*
+VeilOfTriads/*.meta
+VeilOfTriads/*.manifest
+
+# Editor backups / temp
+
+VeilOfTriads/*.tmp
+VeilOfTriads/*.temp
+VeilOfTriads/*.log
+
+# Packaging / distribution
+VeilOfTriads/*.zip
+VeilOfTriads/*.tar.gz
+VeilOfTriads/*.7z
+VeilOfTriads/*.rar
+
+# Third-party / dependency folders (build artifacts)
+VeilOfTriads/third_party/
+VeilOfTriads/external/
+VeilOfTriads/vendor/
+VeilOfTriads/libs/
+VeilOfTriads/_libs/
+VeilOfTriads/_deps/
+
+# CMake helper files (already listed but ensure patterns)
+VeilOfTriads/CMakeFiles/
+VeilOfTriads/CMakeCache.txt
+VeilOfTriads/cmake_install.cmake
+VeilOfTriads/CTestTestfile.cmake
+
+# Misc
+VeilOfTriads/coverage/
+VeilOfTriads/*.cover
+VeilOfTriads/node_modules/
+VeilOfTriads/npm-debug.log
+VeilOfTriads/yarn-error.log
+VeilOfTriads/.idea/
+
