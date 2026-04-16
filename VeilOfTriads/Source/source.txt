@@ -54,6 +54,7 @@ void AppDelegate::initGfxContextAttrs()
 
 bool AppDelegate::applicationDidFinishLaunching()
 {
+    AXLOGD("Debug mode enabled");
     // initialize director
     auto director = Director::getInstance();
     auto renderView   = director->getRenderView();
@@ -194,6 +195,14 @@ void FieldOfGems::click(int x, int y)
   field[x][y] = FieldOfGems::red;
 }
 
+void FieldOfGems::swaped(int row1, int col1, int row2, int col2)
+{
+  if (row1 < 0 || row1 >= (int)field.size() || col1 < 0 || col1 >= (int)field[0].size() ||
+      row2 < 0 || row2 >= (int)field.size() || col2 < 0 || col2 >= (int)field[0].size())
+    return;
+  std::swap(field[row1][col1], field[row2][col2]);
+}
+
 int FieldOfGems::genRandomGemNum()
 {
   static std::random_device rd;
@@ -209,11 +218,12 @@ void FieldOfGems::generateStartField()
 {
   std::vector<gem> randomed_gems = {yellow, red, purple, orange, green, blue};
 
-  for (auto sub_field : field)
+  for (auto& sub_field : field)
   {
-    for (auto cell : sub_field)
+    for (auto& cell : sub_field)
     {
-      cell = (gem)genRandomGemNum();
+      int idx = genRandomGemNum();
+      cell = randomed_gems[idx];
     }
   }
 }
@@ -242,6 +252,7 @@ class FieldOfGems
     FieldOfGems();
     const std::vector<std::vector<char>>& readField();
     void click(int x, int y);
+    void swaped(int row1, int col1, int row2, int col2);
 };
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
@@ -269,7 +280,10 @@ class FieldOfGems
  ****************************************************************************/
 
 #include "GameScene.h"
+#include "Director.h"
 #include "FieldOfGems.h"
+#include <unordered_map>
+#include <cmath>
 
 using namespace ax;
 
@@ -379,7 +393,7 @@ bool GameScene::init()
     // add a label shows "Hello World"
     // create and initialize a label
 
-    auto label = Label::createWithTTF("Hello World", "fonts/PixelGameFont.ttf", 24);
+    auto label = Label::createWithTTF("Score : 0", "fonts/PixelGameFont.ttf", 24);
     if (label == nullptr)
     {
         problemLoading("'fonts/PixelGameFont.ttf'");
@@ -419,16 +433,15 @@ void GameScene::onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event
 {
     for (auto&& t : touches)
     {
-        AXLOGD("onTouchesBegan detected, X:{}  Y:{}", t->getLocation().x, t->getLocation().y);
-        Vec2 location = t->getLocation();
-        Vec2 index = touchToGridIndex(location);
-        if (index.x >= 0 && index.y >= 0)
-        {
-          int col = static_cast<int>(index.x);
-          int row = static_cast<int>(index.y);
-
-          _field.click(row, col);
-        }
+      Vec2 location = t->getLocation();
+      Vec2 index = touchToGridIndex(location);
+      if (index.x >= 0 && index.y >= 0)
+      {
+        int col = static_cast<int>(index.x);
+        int row = static_cast<int>(index.y);
+        handleCellClick(row, col);
+        AXLOGD("Touch at grid: col=%d, row=%d", col, row);
+      }
     }
 }
 
@@ -451,7 +464,18 @@ void GameScene::onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event
 bool GameScene::onMouseDown(Event* event)
 {
     EventMouse* e = static_cast<EventMouse*>(event);
-    AXLOGD("onMouseDown detected, button: {}", static_cast<int>(e->getMouseButton()));
+    Vec2 location = e->getLocationInView();
+    location = _director->convertToGL(location);
+
+    Vec2 index = touchToGridIndex(location);
+    if (index.x >= 0 && index.y >= 0)
+    {
+      int col = static_cast<int>(index.x);
+      int row = static_cast<int>(index.y);
+      handleCellClick(row, col);
+      AXLOGD("Touch at grid: col=%d, row=%d", col, row);
+      printf("Touch at grid: col=%d, row=%d\n", col, row);
+    }
     return true;
 }
 
@@ -559,6 +583,22 @@ void GameScene::menuCloseCallback(ax::Object* sender)
     //_eventDispatcher->dispatchEvent(&customEndEvent);
 }
 
+static std::string getGemImagePath(char gemChar)
+{
+  std::string colorName;
+  switch (gemChar)
+  {
+    case FieldOfGems::yellow:  colorName = "yellow"; break;
+    case FieldOfGems::red:     colorName = "red";    break;
+    case FieldOfGems::purple:  colorName = "purple"; break;
+    case FieldOfGems::orange:  colorName = "orange"; break;
+    case FieldOfGems::green:   colorName = "green";  break;
+    case FieldOfGems::blue:    colorName = "blue";   break;
+    default:      return "";            // пустая клетка
+  }
+  return "res/Colored gems/" + colorName + "/gem_" + colorName + "_big_4x.png";
+}
+
 void GameScene::setupGrid()
 {
   auto visibleSize = _director->getVisibleSize();
@@ -570,40 +610,151 @@ void GameScene::setupGrid()
   _gridStartPos.x = origin.x + (visibleSize.width - gridWidth) * 0.5f;
   _gridStartPos.y = origin.y + (visibleSize.height - gridHeight) * 0.5f;
 
-  _gridDrawNode = DrawNode::create();
-  _gridDrawNode->setPosition(Vec2::ZERO);
-  this->addChild(_gridDrawNode);
+  // Создаём контейнеры для всех спрайтов
+  _gridContainer = Node::create();
+  _gridContainer->setPosition(Vec2::ZERO);
+  this->addChild(_gridContainer);
 
+  // Инициализируем двумерный вектор спрайтов
+  _gemSprites.resize(_gridRows);
+  for (int r = 0; r < _gridRows; ++r)
+  {
+    _gemSprites[r].resize(_gridCols, nullptr);
+  }
+
+  // Первичное создание спрайтов
   redrawGrid();
 }
 
 void GameScene::redrawGrid()
 {
-  _gridDrawNode->clear();
-  Color4F white(1.0f, 1.0f, 1.0f, 1.0f);
-  Color4F transparent(1.0f, 1.0f, 1.0f, 0.0f);
   auto field = _field.readField();
-
 
   for (int r = 0; r < _gridRows; ++r)
   {
     for (int c = 0; c < _gridCols; ++c)
     {
-      float x = _gridStartPos.x + c * _cellSize;
-      float y = _gridStartPos.y + r * _cellSize;
-      Vec2 origin(x, y);
-      Vec2 dest(x + _cellSize, y + _cellSize);
+      char gemChar = field[r][c];
+      std::string imagePath = getGemImagePath(gemChar);
 
-      if (field[r][c] == FieldOfGems::red)
-      {
-        _gridDrawNode->drawRect(origin, dest, white);
-        _gridDrawNode->drawSolidRect(origin, dest, white);
+      // Если спрайт не создан - создаём
+      if (_gemSprites[r][c] == nullptr) {
+        if (!imagePath.empty())
+        {
+          auto sprite = Sprite::create(imagePath);
+          if (sprite)
+          {
+            float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
+            float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
+
+            sprite->setPosition(Vec2(x, y));
+
+            // Масштабируем, чтобы вписать в ячейку
+            float scaleX = _cellSize / sprite->getContentSize().width;
+            float scaleY = _cellSize / sprite->getContentSize().height;
+
+            sprite->setScale(scaleX, scaleY);
+
+            _gridContainer->addChild(sprite);
+            _gemSprites[r][c] = sprite;
+          }
+        }
       }
       else
       {
-        _gridDrawNode->drawRect(origin, dest, white);
+        // Спрайт уже существует - обновляем текстуру или скрываем
+        if (imagePath.empty())
+        {
+          _gemSprites[r][c]->setVisible(false);
+        }
+        else
+        {
+          _gemSprites[r][c]->setVisible(true);
+          // Если текстура изменилась, загружаем новую
+          auto currentTex = _gemSprites[r][c]->getTexture();
+          auto newTex = Director::getInstance()->getTextureCache()->addImage(imagePath);
+          if (currentTex != newTex)
+          {
+            _gemSprites[r][c]->setTexture(newTex);
+          }
+        }
       }
     }
+  }
+  updateSelectionHighlight();
+}
+
+void GameScene::updateSelectionHighlight()
+{
+  // Сначала сбрасываем цвет всех спрайтов
+  for (int r = 0; r < _gridRows; ++r)
+  {
+    for (int c = 0; c < _gridCols; ++c)
+    {
+      if (_gemSprites[r][c])
+      {
+        _gemSprites[r][c]->setColor(ax::Color3B::WHITE);
+      }
+    }
+  }
+
+  // Подсвечиваем выбранный, если есть
+  if (_selectedRow >= 0 && _selectedCol >= 0 && _selectedRow < _gridRows && _selectedCol < _gridCols)
+  {
+    auto sprite = _gemSprites[_selectedRow][_selectedCol];
+    if (sprite)
+    {
+      sprite->setColor(ax::Color3B(220, 220, 220));
+    }
+  }
+}
+
+void GameScene::handleCellClick(int row, int col)
+{
+  AXLOGD("handleCellClick: row=%d, col=%d, selected=(%d,%d)", row, col, _selectedRow, _selectedCol);
+  printf("handleCellClick: row=%d, col=%d, selected=(%d,%d)\n", row, col, _selectedRow, _selectedCol);
+
+  if (row < 0 || row >= _gridRows || col < 0 || col >= _gridCols) return;
+
+  if (_selectedRow == -1)
+  {
+    // Ничего не выбрано - выбираем текущую
+    _selectedRow = row;
+    _selectedCol = col;
+    updateSelectionHighlight();
+    return;
+  }
+
+  // Уже есть выбранная клетка
+  if (_selectedRow == row && _selectedCol == col)
+  {
+    // Клик по той же - снимаем выбор
+    _selectedRow = -1;
+    _selectedCol = -1;
+    updateSelectionHighlight();
+    return;
+  }
+
+  // Проверяем, соседняя ли клетка (манхэттенское расстояние == 1)
+  int dr = std::abs(row - _selectedRow);
+  int dc = std::abs(col - _selectedCol);
+
+  if ((dr == 1 && dc == 0) || (dr == 0 && dc == 1))
+  {
+    // Соседняя: выполняем обмен
+    _field.swaped(_selectedRow, _selectedCol, row, col);
+    printf("Swap: (%d,%d) <-> (%d,%d)\n", _selectedRow, _selectedCol, row, col);
+    redrawGrid();
+    // После обмена снимаем выделение
+    _selectedRow = -1;
+    _selectedCol = -1;
+  }
+  else
+  {
+    // Не соседняя: просто переносим выбор на новую клетку
+    _selectedRow = row;
+    _selectedCol = col;
+    updateSelectionHighlight();
   }
 }
 
@@ -699,16 +850,22 @@ private:
     ax::EventListenerMouse* _mouseListener          = nullptr;
     int _sceneID                                    = 0;
 
-    ax::DrawNode* _gridDrawNode = nullptr;
+    //ax::DrawNode* _gridDrawNode = nullptr;
+    ax::Node* _gridContainer = nullptr;
+    std::vector<std::vector<ax::Sprite*>> _gemSprites;
     FieldOfGems _field;
     int _gridRows = 20;
     int _gridCols = 10;
     float _cellSize = 0.0f;
     ax::Vec2 _gridStartPos; // Левый нижний угол сетки
+    int _selectedRow = -1;
+    int _selectedCol = -1;
 
     void setupGrid();
     void redrawGrid();
     ax::Vec2 touchToGridIndex(const ax::Vec2& touchLocation);
+    void updateSelectionHighlight();
+    void handleCellClick(int row, int col);
 };
 
 /****************************************************************************

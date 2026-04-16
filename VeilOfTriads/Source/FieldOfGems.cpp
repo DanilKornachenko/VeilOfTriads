@@ -18,6 +18,14 @@ void FieldOfGems::click(int x, int y)
   field[x][y] = FieldOfGems::red;
 }
 
+void FieldOfGems::swaped(int row1, int col1, int row2, int col2)
+{
+  if (row1 < 0 || row1 >= (int)field.size() || col1 < 0 || col1 >= (int)field[0].size() ||
+      row2 < 0 || row2 >= (int)field.size() || col2 < 0 || col2 >= (int)field[0].size())
+    return;
+  std::swap(field[row1][col1], field[row2][col2]);
+}
+
 int FieldOfGems::genRandomGemNum()
 {
   static std::random_device rd;

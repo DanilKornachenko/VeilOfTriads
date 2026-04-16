@@ -23,4 +23,5 @@ class FieldOfGems
     FieldOfGems();
     const std::vector<std::vector<char>>& readField();
     void click(int x, int y);
+    void swaped(int row1, int col1, int row2, int col2);
 };

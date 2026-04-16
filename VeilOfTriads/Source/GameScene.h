@@ -72,15 +72,21 @@ private:
     ax::EventListenerMouse* _mouseListener          = nullptr;
     int _sceneID                                    = 0;
 
-    ax::DrawNode* _gridDrawNode = nullptr;
+    //ax::DrawNode* _gridDrawNode = nullptr;
+    ax::Node* _gridContainer = nullptr;
+    std::vector<std::vector<ax::Sprite*>> _gemSprites;
     FieldOfGems _field;
     int _gridRows = 20;
     int _gridCols = 10;
     float _cellSize = 0.0f;
     ax::Vec2 _gridStartPos; // Левый нижний угол сетки
+    int _selectedRow = -1;
+    int _selectedCol = -1;
 
     void setupGrid();
     void redrawGrid();
     ax::Vec2 touchToGridIndex(const ax::Vec2& touchLocation);
+    void updateSelectionHighlight();
+    void handleCellClick(int row, int col);
 };
 
