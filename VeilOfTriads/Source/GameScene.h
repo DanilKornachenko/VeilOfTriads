@@ -25,68 +25,66 @@
 
 #pragma once
 
-#include "axmol.h"
 #include "FieldOfGems.h"
+#include "axmol.h"
 
-class GameScene : public ax::Scene
-{
-    enum class GameState
-    {
-        init = 0,
-        update,
-        pause,
-        end,
-        menu1,
-        menu2,
-    };
+class GameScene : public ax::Scene {
+  enum class GameState {
+    init = 0,
+    update,
+    pause,
+    end,
+    menu1,
+    menu2,
+  };
 
-public:
-    bool init() override;
-    void update(float delta) override;
+ public:
+  bool init() override;
+  void update(float delta) override;
 
-    // touch
-    void onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event* event);
-    void onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event* event);
-    void onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event* event);
+  // touch
+  void onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event* event);
+  void onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event* event);
+  void onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event* event);
 
-    // mouse
-    bool onMouseDown(ax::Event* event);
-    bool onMouseUp(ax::Event* event);
-    bool onMouseMove(ax::Event* event);
-    bool onMouseScroll(ax::Event* event);
+  // mouse
+  bool onMouseDown(ax::Event* event);
+  bool onMouseUp(ax::Event* event);
+  bool onMouseMove(ax::Event* event);
+  bool onMouseScroll(ax::Event* event);
 
-    // Keyboard
-    void onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event* event);
-    void onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event* event);
+  // Keyboard
+  void onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event* event);
+  void onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event* event);
 
-    // a selector callback
-    void menuCloseCallback(ax::Object* sender);
+  // a selector callback
+  void menuCloseCallback(ax::Object* sender);
 
-    GameScene();
-    ~GameScene() override;
+  GameScene();
+  ~GameScene() override;
 
-private:
-    GameState _gameState                            = GameState::init;
-    ax::EventListenerTouchAllAtOnce* _touchListener = nullptr;
-    ax::EventListenerKeyboard* _keyboardListener    = nullptr;
-    ax::EventListenerMouse* _mouseListener          = nullptr;
-    int _sceneID                                    = 0;
+ private:
+  GameState _gameState = GameState::init;
+  ax::EventListenerTouchAllAtOnce* _touchListener = nullptr;
+  ax::EventListenerKeyboard* _keyboardListener = nullptr;
+  ax::EventListenerMouse* _mouseListener = nullptr;
+  int _sceneID = 0;
 
-    //ax::DrawNode* _gridDrawNode = nullptr;
-    ax::Node* _gridContainer = nullptr;
-    std::vector<std::vector<ax::Sprite*>> _gemSprites;
-    FieldOfGems _field;
-    int _gridRows = 20;
-    int _gridCols = 10;
-    float _cellSize = 0.0f;
-    ax::Vec2 _gridStartPos; // Левый нижний угол сетки
-    int _selectedRow = -1;
-    int _selectedCol = -1;
+  // ax::DrawNode* _gridDrawNode = nullptr;
+  ax::Node* _gridContainer = nullptr;
+  std::vector<std::vector<ax::Sprite*>> _gemSprites;
+  FieldOfGems _field;
+  int _gridRows = 20;
+  int _gridCols = 10;
+  float _cellSize = 0.0f;
+  ax::Vec2 _gridStartPos;  // Левый нижний угол сетки
+  int _selectedRow = -1;
+  int _selectedCol = -1;
+  bool _isAnimating = false;
 
-    void setupGrid();
-    void redrawGrid();
-    ax::Vec2 touchToGridIndex(const ax::Vec2& touchLocation);
-    void updateSelectionHighlight();
-    void handleCellClick(int row, int col);
+  void setupGrid();
+  void redrawGrid();
+  ax::Vec2 touchToGridIndex(const ax::Vec2& touchLocation);
+  void updateSelectionHighlight();
+  void handleCellClick(int row, int col);
 };
-

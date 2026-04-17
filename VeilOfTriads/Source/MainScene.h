@@ -27,49 +27,46 @@
 
 #include "axmol.h"
 
-class MainScene : public ax::Scene
-{
-    enum class GameState
-    {
-        init = 0,
-        update,
-        pause,
-        end,
-        menu1,
-        menu2,
-    };
+class MainScene : public ax::Scene {
+  enum class GameState {
+    init = 0,
+    update,
+    pause,
+    end,
+    menu1,
+    menu2,
+  };
 
-public:
-    bool init() override;
-    void update(float delta) override;
+ public:
+  bool init() override;
+  void update(float delta) override;
 
-    // touch
-    void onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event* event);
-    void onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event* event);
-    void onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event* event);
+  // touch
+  void onTouchesBegan(const std::vector<ax::Touch*>& touches, ax::Event* event);
+  void onTouchesMoved(const std::vector<ax::Touch*>& touches, ax::Event* event);
+  void onTouchesEnded(const std::vector<ax::Touch*>& touches, ax::Event* event);
 
-    // mouse
-    bool onMouseDown(ax::Event* event);
-    bool onMouseUp(ax::Event* event);
-    bool onMouseMove(ax::Event* event);
-    bool onMouseScroll(ax::Event* event);
+  // mouse
+  bool onMouseDown(ax::Event* event);
+  bool onMouseUp(ax::Event* event);
+  bool onMouseMove(ax::Event* event);
+  bool onMouseScroll(ax::Event* event);
 
-    // Keyboard
-    void onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event* event);
-    void onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event* event);
+  // Keyboard
+  void onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event* event);
+  void onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event* event);
 
-    // a selector callback
-    void menuCloseCallback(ax::Object* sender);
-    void goToGameScene(ax::Object* sender);
+  // a selector callback
+  void menuCloseCallback(ax::Object* sender);
+  void goToGameScene(ax::Object* sender);
 
-    MainScene();
-    ~MainScene() override;
+  MainScene();
+  ~MainScene() override;
 
-private:
-    GameState _gameState                            = GameState::init;
-    ax::EventListenerTouchAllAtOnce* _touchListener = nullptr;
-    ax::EventListenerKeyboard* _keyboardListener    = nullptr;
-    ax::EventListenerMouse* _mouseListener          = nullptr;
-    int _sceneID                                    = 0;
+ private:
+  GameState _gameState = GameState::init;
+  ax::EventListenerTouchAllAtOnce* _touchListener = nullptr;
+  ax::EventListenerKeyboard* _keyboardListener = nullptr;
+  ax::EventListenerMouse* _mouseListener = nullptr;
+  int _sceneID = 0;
 };
-
