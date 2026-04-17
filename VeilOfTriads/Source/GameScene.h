@@ -87,4 +87,6 @@ class GameScene : public ax::Scene {
   ax::Vec2 touchToGridIndex(const ax::Vec2& touchLocation);
   void updateSelectionHighlight();
   void handleCellClick(int row, int col);
+  void animateSwap(int r1, int c1, int r2, int c2);
+  void animateSwapBack(int r1, int c1, int r2, int c2);
 };
