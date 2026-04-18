@@ -83,6 +83,9 @@ class GameScene : public ax::Scene {
   bool _isAnimating = false;
   int _score = 0;
   ax::Label* _scoreLabel = nullptr;
+  ax::Vec2 _touchStart;
+  bool _swipeHandled = false;
+  bool soundPlayed = false;
 
   void setupGrid();
   void redrawGrid();

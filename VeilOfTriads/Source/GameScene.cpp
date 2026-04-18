@@ -31,6 +31,7 @@
 #include "2d/ActionInterval.h"
 #include "Director.h"
 #include "FieldOfGems.h"
+#include "audio/AudioEngine.h"
 
 using namespace ax;
 
@@ -53,6 +54,8 @@ bool GameScene::init() {
     return false;
   }
 
+  AudioEngine::preload("res/Music/pop.ogg");
+
   auto visibleSize = _director->getVisibleSize();
   auto origin = _director->getVisibleOrigin();
   auto safeArea = _director->getSafeAreaRect();
@@ -67,10 +70,8 @@ bool GameScene::init() {
     problemLoading("'res/UI/background.png'");
   } else {
     // position the sprite on the center of the screen
-    sprite->setPosition(Vec2(
-          origin.x + visibleSize.width / 2,
-          origin.y + visibleSize.height / 2
-    ));
+    sprite->setPosition(Vec2(origin.x + visibleSize.width / 2,
+                             origin.y + visibleSize.height / 2));
 
     // Растягиваем на весь экран
     float scaleX = visibleSize.width / sprite->getContentSize().width;
@@ -163,6 +164,7 @@ Vec2 GameScene::touchToGridIndex(const Vec2& touchLocation) {
 void GameScene::onTouchesBegan(const std::vector<ax::Touch*>& touches,
                                ax::Event* event) {
   for (auto&& t : touches) {
+    /*
     Vec2 location = t->getLocation();
     Vec2 index = touchToGridIndex(location);
     if (index.x >= 0 && index.y >= 0) {
@@ -171,19 +173,63 @@ void GameScene::onTouchesBegan(const std::vector<ax::Touch*>& touches,
       handleCellClick(row, col);
       AXLOGD("Touch at grid: col=%d, row=%d", col, row);
     }
+    */
+    _touchStart = t->getLocation();
+    _swipeHandled = false;
   }
 }
 
 void GameScene::onTouchesMoved(const std::vector<ax::Touch*>& touches,
                                ax::Event* event) {
+  if (_isAnimating || _swipeHandled) return;
+
   for (auto&& t : touches) {
-    // AXLOGD("onTouchesMoved detected, X:{}  Y:{}", t->getLocation().x,
-    // t->getLocation().y);
+    Vec2 current = t->getLocation();
+    Vec2 delta = current - _touchStart;
+    float threshold = 30.0f;  // Чувствительность свайпа
+
+    if (fabs(delta.x) < threshold && fabs(delta.y) < threshold) return;
+
+    Vec2 startIndex = touchToGridIndex(_touchStart);
+
+    if (startIndex.x < 0 || startIndex.y < 0) return;
+
+    int col = (int)startIndex.x;
+    int row = (int)startIndex.y;
+
+    int targetRow = row;
+    int targetCol = col;
+
+    // Определяем направление
+    if (fabs(delta.x) > fabs(delta.y)) {
+      // горизонтальный свайп
+      if (delta.x > 0)
+        targetCol += 1;  // вправо
+      else
+        targetCol -= 1;  // влево
+    } else {
+      // вертикальный свайп
+      if (delta.y > 0)
+        targetRow += 1;  // вверх
+      else
+        targetRow -= 1;  // вниз
+    }
+
+    // Проверка границ
+    if (targetRow < 0 || targetRow >= _gridRows || targetCol < 0 ||
+        targetCol >= _gridCols)
+      return;
+
+    // Запускаем анимацию свапа
+    animateSwap(row, col, targetRow, targetCol);
+
+    _swipeHandled = true;
   }
 }
 
 void GameScene::onTouchesEnded(const std::vector<ax::Touch*>& touches,
                                ax::Event* event) {
+  _swipeHandled = false;
   for (auto&& t : touches) {
     // AXLOGD("onTouchesEnded detected, X:{}  Y:{}", t->getLocation().x,
     // t->getLocation().y);
@@ -419,6 +465,11 @@ void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
       if (matches[r][c] && _gemSprites[r][c]) {
         auto sprite = _gemSprites[r][c];
 
+        if (!soundPlayed) {
+          AudioEngine::play2d("res/Music/pop.ogg");
+          soundPlayed = true;
+        }
+
         auto fade = FadeOut::create(duration);
         auto scale = ScaleTo::create(duration, 0.0f);
         auto spawn = Spawn::create(fade, scale, nullptr);
@@ -431,6 +482,8 @@ void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
       }
     }
   }
+
+  soundPlayed = false;
 
   auto callback = CallFunc::create([=]() {
     _score += gainedScore;
@@ -682,64 +735,61 @@ void GameScene::animateSwapBack(int r1, int c1, int r2, int c2) {
   sprite2->runAction(Sequence::create(move2, callback, nullptr));
 }
 
-void GameScene::updateScoreLabel()
-{
-  if (_scoreLabel)
-  {
+void GameScene::updateScoreLabel() {
+  if (_scoreLabel) {
     _scoreLabel->setString("Score : " + std::to_string(_score));
   }
 }
 
-int GameScene::calculateScoreFromMatches(const std::vector<std::vector<bool>>& matches)
-{
-    int score = 0;
+int GameScene::calculateScoreFromMatches(
+    const std::vector<std::vector<bool>>& matches) {
+  int score = 0;
 
-    for (int r = 0; r < _gridRows; ++r) {
-        int length = 0;
-
-        for (int c = 0; c < _gridCols; ++c) {
-            if (matches[r][c]) {
-                length++;
-            } else {
-                if (length >= 3) {
-                    score += getMatchScore(length);
-                }
-                length = 0;
-            }
-        }
-
-        if (length >= 3) {
-            score += getMatchScore(length);
-        }
-    }
+  for (int r = 0; r < _gridRows; ++r) {
+    int length = 0;
 
     for (int c = 0; c < _gridCols; ++c) {
-        int length = 0;
-
-        for (int r = 0; r < _gridRows; ++r) {
-            if (matches[r][c]) {
-                length++;
-            } else {
-                if (length >= 3) {
-                    score += getMatchScore(length);
-                }
-                length = 0;
-            }
-        }
-
+      if (matches[r][c]) {
+        length++;
+      } else {
         if (length >= 3) {
-            score += getMatchScore(length);
+          score += getMatchScore(length);
         }
+        length = 0;
+      }
     }
 
-    return score;
+    if (length >= 3) {
+      score += getMatchScore(length);
+    }
+  }
+
+  for (int c = 0; c < _gridCols; ++c) {
+    int length = 0;
+
+    for (int r = 0; r < _gridRows; ++r) {
+      if (matches[r][c]) {
+        length++;
+      } else {
+        if (length >= 3) {
+          score += getMatchScore(length);
+        }
+        length = 0;
+      }
+    }
+
+    if (length >= 3) {
+      score += getMatchScore(length);
+    }
+  }
+
+  return score;
 }
 
-int GameScene::getMatchScore(int length)
-{
-    if (length >= 3) return length * 10;
+int GameScene::getMatchScore(int length) {
+  if (length >= 3) return length * 10;
 
-    return 0;
+  return 0;
 }
 
 GameScene::GameScene() {

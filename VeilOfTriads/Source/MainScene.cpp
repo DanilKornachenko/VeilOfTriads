@@ -62,14 +62,12 @@ bool MainScene::init() {
 
   // add a "next" icon
   auto nextItem =
-      MenuItemImage::create("res/UI/button.png",
-                            "res/UI/button.png",
+      MenuItemImage::create("res/UI/button.png", "res/UI/button.png",
                             AX_CALLBACK_1(MainScene::goToGameScene, this));
 
   if (nextItem == nullptr || nextItem->getContentSize().width <= 0 ||
       nextItem->getContentSize().height <= 0) {
-    problemLoading(
-        "'res/UI/button.png' and 'res/UI/button.png'");
+    problemLoading("'res/UI/button.png' and 'res/UI/button.png'");
   } else {
     float x = visibleSize.width / 2;
     float y = visibleSize.height / 2 - 150;
@@ -78,12 +76,9 @@ bool MainScene::init() {
     // Создаём текст
     auto label = Label::createWithTTF("Start", "fonts/PixelGameFont.ttf", 18);
 
-    if (label)
-    {
-      label->setPosition(Vec2(
-            nextItem->getContentSize().width / 2,
-            nextItem->getContentSize().height / 2
-      ));
+    if (label) {
+      label->setPosition(Vec2(nextItem->getContentSize().width / 2,
+                              nextItem->getContentSize().height / 2));
 
       label->setColor(Color3B::WHITE);
 
@@ -101,14 +96,11 @@ bool MainScene::init() {
   /////////////////////////////
   // title
 
-  auto title = Label::createWithTTF("Veil of Triads", "fonts/PixelGameFont.ttf", 128);
+  auto title =
+      Label::createWithTTF("Veil of Triads", "fonts/PixelGameFont.ttf", 128);
 
-  if (title)
-  {
-    title->setPosition(Vec2(
-          visibleSize.x / 2,
-          visibleSize.y / 2
-    ));
+  if (title) {
+    title->setPosition(Vec2(visibleSize.x / 2, visibleSize.y / 2));
 
     title->setColor(Color3B::WHITE);
 
@@ -153,10 +145,8 @@ bool MainScene::init() {
     problemLoading("'res/UI/background.png'");
   } else {
     // position the sprite on the center of the screen
-    sprite->setPosition(Vec2(
-          origin.x + visibleSize.width / 2,
-          origin.y + visibleSize.height / 2
-    ));
+    sprite->setPosition(Vec2(origin.x + visibleSize.width / 2,
+                             origin.y + visibleSize.height / 2));
 
     // Растягиваем на весь экран
     float scaleX = visibleSize.width / sprite->getContentSize().width;
