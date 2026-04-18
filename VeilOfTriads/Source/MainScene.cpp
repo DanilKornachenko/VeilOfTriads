@@ -57,50 +57,63 @@ bool MainScene::init() {
   // 2. add a menu item with "X" image, which is clicked to quit the program
   //    you may modify it.
 
-  // add a "close" icon to exit the progress. it's an autorelease object
-  auto closeItem =
-      MenuItemImage::create("CloseNormal.png", "CloseSelected.png",
-                            AX_CALLBACK_1(MainScene::menuCloseCallback, this));
-
-  if (closeItem == nullptr || closeItem->getContentSize().width <= 0 ||
-      closeItem->getContentSize().height <= 0) {
-    problemLoading("'CloseNormal.png' and 'CloseSelected.png'");
-  } else {
-    float x = safeOrigin.x + safeArea.size.width -
-              closeItem->getContentSize().width / 2;
-    float y = safeOrigin.y + closeItem->getContentSize().height / 2;
-    closeItem->setPosition(Vec2(x, y));
-  }
-
-  // create menu, it's an autorelease object
-  auto menu = Menu::create(closeItem, NULL);
-  menu->setPosition(Vec2::ZERO);
-  this->addChild(menu, 1);
-
   /////////////////////////////
   // add a menu item to go in another scene
 
   // add a "next" icon
   auto nextItem =
-      MenuItemImage::create("res/Colored gems/red/gem_red_big_4x.png",
-                            "res/Colored gems/red/gem_red_big_4x.png",
+      MenuItemImage::create("res/UI/button.png",
+                            "res/UI/button.png",
                             AX_CALLBACK_1(MainScene::goToGameScene, this));
 
   if (nextItem == nullptr || nextItem->getContentSize().width <= 0 ||
       nextItem->getContentSize().height <= 0) {
     problemLoading(
-        "'res/Colored gems/red/gem_red_big_4x.png' and 'res/Colored "
-        "gems/red/gem_red_big_4x.png'");
+        "'res/UI/button.png' and 'res/UI/button.png'");
   } else {
-    float x = origin.x / 2;
-    float y = (origin.y / 2) - 150;
+    float x = visibleSize.width / 2;
+    float y = visibleSize.height / 2 - 150;
     nextItem->setPosition(Vec2(x, y));
+
+    // Создаём текст
+    auto label = Label::createWithTTF("Start", "fonts/PixelGameFont.ttf", 18);
+
+    if (label)
+    {
+      label->setPosition(Vec2(
+            nextItem->getContentSize().width / 2,
+            nextItem->getContentSize().height / 2
+      ));
+
+      label->setColor(Color3B::WHITE);
+
+      nextItem->addChild(label, 1);
+    }
   }
+
+  nextItem->setScale(2.0f);
 
   // Create button
   auto menuNext = Menu::create(nextItem, NULL);
-  menu->setPosition(Vec2::ZERO);
+  menuNext->setPosition(Vec2::ZERO);
   this->addChild(menuNext, 1);
+
+  /////////////////////////////
+  // title
+
+  auto title = Label::createWithTTF("Veil of Triads", "fonts/PixelGameFont.ttf", 128);
+
+  if (title)
+  {
+    title->setPosition(Vec2(
+          visibleSize.x / 2,
+          visibleSize.y / 2
+    ));
+
+    title->setColor(Color3B::WHITE);
+
+    addChild(title, 1);
+  }
 
   /////////////////////////////
   // 3. add your codes below...
@@ -135,27 +148,21 @@ bool MainScene::init() {
   // add a label shows "Hello World"
   // create and initialize a label
 
-  auto label =
-      Label::createWithTTF("Hello World", "fonts/PixelGameFont.ttf", 24);
-  if (label == nullptr) {
-    problemLoading("'fonts/PixelGameFont.ttf'");
-  } else {
-    // position the label on the center of the screen
-    label->setPosition(
-        Vec2(origin.x + visibleSize.width / 2,
-             origin.y + visibleSize.height - label->getContentSize().height));
-
-    // add the label as a child to this layer
-    this->addChild(label, 1);
-  }
-  // add "HelloWorld" splash screen"
-  auto sprite = Sprite::create("HelloWorld.png"sv);
+  auto sprite = Sprite::create("res/UI/background.png");
   if (sprite == nullptr) {
-    problemLoading("'HelloWorld.png'");
+    problemLoading("'res/UI/background.png'");
   } else {
     // position the sprite on the center of the screen
-    sprite->setPosition(Vec2(visibleSize.width / 2 + origin.x,
-                             visibleSize.height / 2 + origin.y));
+    sprite->setPosition(Vec2(
+          origin.x + visibleSize.width / 2,
+          origin.y + visibleSize.height / 2
+    ));
+
+    // Растягиваем на весь экран
+    float scaleX = visibleSize.width / sprite->getContentSize().width;
+    float scaleY = visibleSize.height / sprite->getContentSize().height;
+
+    sprite->setScale(scaleX, scaleY);
 
     // add the sprite as a child to this layer
     this->addChild(sprite, 0);

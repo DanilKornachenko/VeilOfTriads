@@ -81,6 +81,8 @@ class GameScene : public ax::Scene {
   int _selectedRow = -1;
   int _selectedCol = -1;
   bool _isAnimating = false;
+  int _score = 0;
+  ax::Label* _scoreLabel = nullptr;
 
   void setupGrid();
   void redrawGrid();
@@ -93,4 +95,7 @@ class GameScene : public ax::Scene {
   void applyGravityWithAnimation();
   void spawnNewGems();
   void checkMatchesAgain();
+  void updateScoreLabel();
+  int calculateScoreFromMatches(const std::vector<std::vector<bool>>& matches);
+  int getMatchScore(int length);
 };

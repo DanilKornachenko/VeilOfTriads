@@ -62,25 +62,31 @@ bool GameScene::init() {
   // 2. add a menu item with "X" image, which is clicked to quit the program
   //    you may modify it.
 
-  // add a "close" icon to exit the progress. it's an autorelease object
-  auto closeItem =
-      MenuItemImage::create("CloseNormal.png", "CloseSelected.png",
-                            AX_CALLBACK_1(GameScene::menuCloseCallback, this));
-
-  if (closeItem == nullptr || closeItem->getContentSize().width <= 0 ||
-      closeItem->getContentSize().height <= 0) {
-    problemLoading("'CloseNormal.png' and 'CloseSelected.png'");
+  auto sprite = Sprite::create("res/UI/background.png");
+  if (sprite == nullptr) {
+    problemLoading("'res/UI/background.png'");
   } else {
-    float x = safeOrigin.x + safeArea.size.width -
-              closeItem->getContentSize().width / 2;
-    float y = safeOrigin.y + closeItem->getContentSize().height / 2;
-    closeItem->setPosition(Vec2(x, y));
-  }
+    // position the sprite on the center of the screen
+    sprite->setPosition(Vec2(
+          origin.x + visibleSize.width / 2,
+          origin.y + visibleSize.height / 2
+    ));
 
-  // create menu, it's an autorelease object
-  auto menu = Menu::create(closeItem, NULL);
-  menu->setPosition(Vec2::ZERO);
-  this->addChild(menu, 1);
+    // Растягиваем на весь экран
+    float scaleX = visibleSize.width / sprite->getContentSize().width;
+    float scaleY = visibleSize.height / sprite->getContentSize().height;
+
+    sprite->setScale(scaleX, scaleY);
+
+    // add the sprite as a child to this layer
+    this->addChild(sprite, 0);
+    auto drawNode = DrawNode::create();
+    drawNode->setPosition(Vec2(0, 0));
+    addChild(drawNode);
+
+    drawNode->drawRect(safeArea.origin + Vec2(1, 1),
+                       safeArea.origin + safeArea.size, Color4F::BLUE);
+  }
 
   /////////////////////////////
   // Draw Field
@@ -130,6 +136,8 @@ bool GameScene::init() {
 
     // add the label as a child to this layer
     this->addChild(label, 1);
+
+    _scoreLabel = label;
   }
 
   // scheduleUpdate() is required to ensure update(float) is called on every
@@ -404,6 +412,8 @@ void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
   float duration = 0.2f;
   int animationsCount = 0;
 
+  int gainedScore = 0;
+
   for (int r = 0; r < _gridRows; ++r) {
     for (int c = 0; c < _gridCols; ++c) {
       if (matches[r][c] && _gemSprites[r][c]) {
@@ -416,11 +426,16 @@ void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
         sprite->runAction(spawn);
 
         animationsCount++;
+
+        gainedScore = calculateScoreFromMatches(matches);
       }
     }
   }
 
   auto callback = CallFunc::create([=]() {
+    _score += gainedScore;
+    updateScoreLabel();
+
     _field.removeMatches(matches);
 
     for (int r = 0; r < _gridRows; ++r) {
@@ -665,6 +680,66 @@ void GameScene::animateSwapBack(int r1, int c1, int r2, int c2) {
 
   sprite1->runAction(move1);
   sprite2->runAction(Sequence::create(move2, callback, nullptr));
+}
+
+void GameScene::updateScoreLabel()
+{
+  if (_scoreLabel)
+  {
+    _scoreLabel->setString("Score : " + std::to_string(_score));
+  }
+}
+
+int GameScene::calculateScoreFromMatches(const std::vector<std::vector<bool>>& matches)
+{
+    int score = 0;
+
+    for (int r = 0; r < _gridRows; ++r) {
+        int length = 0;
+
+        for (int c = 0; c < _gridCols; ++c) {
+            if (matches[r][c]) {
+                length++;
+            } else {
+                if (length >= 3) {
+                    score += getMatchScore(length);
+                }
+                length = 0;
+            }
+        }
+
+        if (length >= 3) {
+            score += getMatchScore(length);
+        }
+    }
+
+    for (int c = 0; c < _gridCols; ++c) {
+        int length = 0;
+
+        for (int r = 0; r < _gridRows; ++r) {
+            if (matches[r][c]) {
+                length++;
+            } else {
+                if (length >= 3) {
+                    score += getMatchScore(length);
+                }
+                length = 0;
+            }
+        }
+
+        if (length >= 3) {
+            score += getMatchScore(length);
+        }
+    }
+
+    return score;
+}
+
+int GameScene::getMatchScore(int length)
+{
+    if (length >= 3) return length * 10;
+
+    return 0;
 }
 
 GameScene::GameScene() {
