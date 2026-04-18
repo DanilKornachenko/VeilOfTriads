@@ -5,8 +5,6 @@ class FieldOfGems {
  private:
   std::vector<std::vector<char>> field;
   void generateStartField();
-  void removeMatches(const std::vector<std::vector<bool>>& matches);
-  void applyGravity();
 
  public:
   enum gem {
@@ -28,4 +26,6 @@ class FieldOfGems {
   int genRandomGemNum();
   void setGem(int row, int col, char gem);
   bool findMatches(std::vector<std::vector<bool>>& outMatches) const;
+  void removeMatches(const std::vector<std::vector<bool>>& matches);
+  void applyGravity();
 };

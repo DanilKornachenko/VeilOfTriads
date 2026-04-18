@@ -89,4 +89,8 @@ class GameScene : public ax::Scene {
   void handleCellClick(int row, int col);
   void animateSwap(int r1, int c1, int r2, int c2);
   void animateSwapBack(int r1, int c1, int r2, int c2);
+  void animateMatches(const std::vector<std::vector<bool>>& matches);
+  void applyGravityWithAnimation();
+  void spawnNewGems();
+  void checkMatchesAgain();
 };

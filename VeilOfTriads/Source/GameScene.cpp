@@ -84,36 +84,9 @@ bool GameScene::init() {
 
   /////////////////////////////
   // Draw Field
-  /*
-  int gridCols = 10;
-  int gridRows = 20;
 
-  float cellSize = (visibleSize.height * 0.9f) / gridRows;
-
-  float gridWidth = gridCols * cellSize;
-  float gridHeight = gridRows * cellSize;
-  float startX = origin.x + (visibleSize.width - gridWidth) * 0.5f;
-  float startY = origin.y + (visibleSize.height - gridHeight) * 0.5f;
-
-  auto drawNode = DrawNode::create();
-  drawNode->setPosition(Vec2::ZERO); // Позиция узла в его родительской системе
-  координат
-
-  Color4F whiteColor(1.0f, 1.0f, 1.0f, 1.0f); // RGBA
-
-  for (int row = 0; row < gridRows; ++row) {
-      for (int col = 0; col < gridCols; ++col) {
-          float x = startX + col * cellSize;
-          float y = startY + row * cellSize;
-          Vec2 origin(x, y);
-          Vec2 destination(x + cellSize, y + cellSize);
-          drawNode->drawRect(origin, destination, whiteColor);
-      }
-  }
-
-  this->addChild(drawNode);
-  */
   setupGrid();
+
   /////////////////////////////
   // 3. add your codes below...
 
@@ -372,7 +345,7 @@ void GameScene::setupGrid() {
   // Первичное создание спрайтов
   redrawGrid();
 }
-/*
+
 void GameScene::redrawGrid() {
   auto field = _field.readField();
 
@@ -380,94 +353,197 @@ void GameScene::redrawGrid() {
     for (int c = 0; c < _gridCols; ++c) {
       char gemChar = field[r][c];
       std::string imagePath = getGemImagePath(gemChar);
+      ax::Sprite* sprite = _gemSprites[r][c];
 
-      // Если спрайт не создан - создаём
-      if (_gemSprites[r][c] == nullptr) {
+      if (sprite == nullptr) {
         if (!imagePath.empty()) {
-          auto sprite = Sprite::create(imagePath);
+          sprite = ax::Sprite::create(imagePath);
           if (sprite) {
             float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
             float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
-
-            sprite->setPosition(Vec2(x, y));
-
-            // Масштабируем, чтобы вписать в ячейку
+            sprite->setPosition(ax::Vec2(x, y));
             float scaleX = _cellSize / sprite->getContentSize().width;
             float scaleY = _cellSize / sprite->getContentSize().height;
-
             sprite->setScale(scaleX, scaleY);
-
             _gridContainer->addChild(sprite);
             _gemSprites[r][c] = sprite;
           }
         }
       } else {
-        // Спрайт уже существует - обновляем текстуру или скрываем
+        // Обновляем позицию и текстуру существующего спрайта
+        float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
+        float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
+        sprite->setPosition(ax::Vec2(x, y));
+
         if (imagePath.empty()) {
-          _gemSprites[r][c]->setVisible(false);
+          sprite->setVisible(false);
         } else {
-          _gemSprites[r][c]->setVisible(true);
-          // Если текстура изменилась, загружаем новую
-          auto currentTex = _gemSprites[r][c]->getTexture();
-          auto newTex =
-              Director::getInstance()->getTextureCache()->addImage(imagePath);
-          if (currentTex != newTex) {
-            _gemSprites[r][c]->setTexture(newTex);
+          sprite->setVisible(true);
+          auto currentTex = sprite->getTexture();
+          if (!imagePath.empty()) {
+            auto newTex =
+                ax::Director::getInstance()->getTextureCache()->addImage(
+                    imagePath);
+            if (currentTex != newTex) {
+              sprite->setTexture(newTex);
+            }
           }
+          float scaleX = _cellSize / sprite->getContentSize().width;
+          float scaleY = _cellSize / sprite->getContentSize().height;
+          sprite->setScale(scaleX, scaleY);
         }
       }
     }
   }
   updateSelectionHighlight();
 }
-*/
 
-void GameScene::redrawGrid() {
-    auto field = _field.readField();
+void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
+  _isAnimating = true;
+
+  float duration = 0.2f;
+  int animationsCount = 0;
+
+  for (int r = 0; r < _gridRows; ++r) {
+    for (int c = 0; c < _gridCols; ++c) {
+      if (matches[r][c] && _gemSprites[r][c]) {
+        auto sprite = _gemSprites[r][c];
+
+        auto fade = FadeOut::create(duration);
+        auto scale = ScaleTo::create(duration, 0.0f);
+        auto spawn = Spawn::create(fade, scale, nullptr);
+
+        sprite->runAction(spawn);
+
+        animationsCount++;
+      }
+    }
+  }
+
+  auto callback = CallFunc::create([=]() {
+    _field.removeMatches(matches);
 
     for (int r = 0; r < _gridRows; ++r) {
-        for (int c = 0; c < _gridCols; ++c) {
-            char gemChar = field[r][c];
-            std::string imagePath = getGemImagePath(gemChar);
-            ax::Sprite* sprite = _gemSprites[r][c];
-
-            if (sprite == nullptr) {
-                if (!imagePath.empty()) {
-                    sprite = ax::Sprite::create(imagePath);
-                    if (sprite) {
-                        float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
-                        float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
-                        sprite->setPosition(ax::Vec2(x, y));
-                        float scaleX = _cellSize / sprite->getContentSize().width;
-                        float scaleY = _cellSize / sprite->getContentSize().height;
-                        sprite->setScale(scaleX, scaleY);
-                        _gridContainer->addChild(sprite);
-                        _gemSprites[r][c] = sprite;
-                    }
-                }
-            } else {
-                // Обновляем позицию и текстуру существующего спрайта
-                float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
-                float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
-                sprite->setPosition(ax::Vec2(x, y));
-
-                if (imagePath.empty()) {
-                    sprite->setVisible(false);
-                } else {
-                    sprite->setVisible(true);
-                    auto currentTex = sprite->getTexture();
-                    auto newTex = ax::Director::getInstance()->getTextureCache()->addImage(imagePath);
-                    if (currentTex != newTex) {
-                        sprite->setTexture(newTex);
-                    }
-                    float scaleX = _cellSize / sprite->getContentSize().width;
-                    float scaleY = _cellSize / sprite->getContentSize().height;
-                    sprite->setScale(scaleX, scaleY);
-                }
-            }
+      for (int c = 0; c < _gridCols; ++c) {
+        if (matches[r][c] && _gemSprites[r][c]) {
+          _gemSprites[r][c]->removeFromParent();
+          _gemSprites[r][c] = nullptr;
         }
+      }
     }
-    updateSelectionHighlight();
+
+    applyGravityWithAnimation();
+  });
+
+  if (animationsCount == 0) {
+    callback->execute();
+  } else {
+    this->runAction(
+        Sequence::create(DelayTime::create(duration), callback, nullptr));
+  }
+}
+
+void GameScene::applyGravityWithAnimation() {
+  _field.applyGravity();
+
+  float duration = 0.2f;
+  int animationsCount = 0;
+
+  for (int c = 0; c < _gridCols; ++c) {
+    int writeRow = 0;
+
+    for (int r = 0; r < _gridRows; ++r) {
+      if (_gemSprites[r][c]) {
+        auto sprite = _gemSprites[r][c];
+
+        if (r != writeRow) {
+          float targetY =
+              _gridStartPos.y + writeRow * _cellSize + _cellSize / 2;
+
+          auto move =
+              MoveTo::create(duration, Vec2(sprite->getPositionX(), targetY));
+
+          sprite->runAction(move);
+
+          _gemSprites[writeRow][c] = sprite;
+          _gemSprites[r][c] = nullptr;
+
+          animationsCount++;
+        }
+
+        writeRow++;
+      }
+    }
+  }
+
+  auto callback = CallFunc::create([=]() { spawnNewGems(); });
+
+  if (animationsCount == 0) {
+    callback->execute();
+  } else {
+    this->runAction(
+        Sequence::create(DelayTime::create(duration), callback, nullptr));
+  }
+}
+
+void GameScene::spawnNewGems() {
+  _field.fillEmptyCells();
+
+  float duration = 0.2f;
+  int animationsCount = 0;
+
+  auto field = _field.readField();
+
+  for (int r = 0; r < _gridRows; ++r) {
+    for (int c = 0; c < _gridCols; ++c) {
+      if (_gemSprites[r][c] == nullptr) {
+        char gem = field[r][c];
+        if (gem == '.' || gem == '\0') continue;
+
+        std::string path = getGemImagePath(gem);
+
+        auto sprite = Sprite::create(path);
+        if (!sprite) continue;
+
+        float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
+        float startY = _gridStartPos.y + _gridRows * _cellSize;
+        float targetY = _gridStartPos.y + r * _cellSize + _cellSize / 2;
+
+        sprite->setPosition(Vec2(x, startY));
+
+        float scaleX = _cellSize / sprite->getContentSize().width;
+        float scaleY = _cellSize / sprite->getContentSize().height;
+        sprite->setScale(scaleX, scaleY);
+
+        _gridContainer->addChild(sprite);
+        _gemSprites[r][c] = sprite;
+
+        auto move = MoveTo::create(duration, Vec2(x, targetY));
+        sprite->runAction(move);
+
+        animationsCount++;
+      }
+    }
+  }
+
+  auto callback = CallFunc::create([=]() { checkMatchesAgain(); });
+
+  if (animationsCount == 0) {
+    callback->execute();
+  } else {
+    this->runAction(
+        Sequence::create(DelayTime::create(duration), callback, nullptr));
+  }
+}
+
+void GameScene::checkMatchesAgain() {
+  std::vector<std::vector<bool>> matches;
+
+  if (_field.findMatches(matches)) {
+    animateMatches(matches);
+  } else {
+    _isAnimating = false;
+  }
 }
 
 void GameScene::updateSelectionHighlight() {
@@ -489,56 +565,6 @@ void GameScene::updateSelectionHighlight() {
     }
   }
 }
-/*
-void GameScene::handleCellClick(int row, int col) {
-  if (_isAnimating) return;
-
-  AXLOGD("handleCellClick: row=%d, col=%d, selected=(%d,%d)", row, col,
-         _selectedRow, _selectedCol);
-  printf("handleCellClick: row=%d, col=%d, selected=(%d,%d)\n", row, col,
-         _selectedRow, _selectedCol);
-
-  if (row < 0 || row >= _gridRows || col < 0 || col >= _gridCols) return;
-
-  if (_selectedRow == -1) {
-    // Ничего не выбрано - выбираем текущую
-    _selectedRow = row;
-    _selectedCol = col;
-    updateSelectionHighlight();
-    return;
-  }
-
-  // Уже есть выбранная клетка
-  if (_selectedRow == row && _selectedCol == col) {
-    // Клик по той же - снимаем выбор
-    _selectedRow = -1;
-    _selectedCol = -1;
-    updateSelectionHighlight();
-    return;
-  }
-
-  // Проверяем, соседняя ли клетка (манхэттенское расстояние == 1)
-  int dr = std::abs(row - _selectedRow);
-  int dc = std::abs(col - _selectedCol);
-
-  if ((dr == 1 && dc == 0) || (dr == 0 && dc == 1)) {
-    int selectedRow = _selectedRow;
-    int selectedCol = _selectedCol;
-
-    _selectedRow = -1;
-    _selectedCol = -1;
-    updateSelectionHighlight();
-
-    _field.swaped(selectedRow, selectedCol, row, col);
-    bool hadMatches = _field.processMatches();
-
-    if (!hadMatches) {
-      _field.swaped(selectedRow, selectedCol, row, col);
-    }
-    redrawGrid();
-  }
-}
-*/
 
 void GameScene::handleCellClick(int row, int col) {
   if (_isAnimating) return;
@@ -583,72 +609,62 @@ void GameScene::handleCellClick(int row, int col) {
   }
 }
 
-void GameScene::animateSwap(int r1, int c1, int r2, int c2)
-{
-    _isAnimating = true;
+void GameScene::animateSwap(int r1, int c1, int r2, int c2) {
+  _isAnimating = true;
 
-    auto sprite1 = _gemSprites[r1][c1];
-    auto sprite2 = _gemSprites[r2][c2];
+  auto sprite1 = _gemSprites[r1][c1];
+  auto sprite2 = _gemSprites[r2][c2];
 
-    Vec2 pos1 = sprite1->getPosition();
-    Vec2 pos2 = sprite2->getPosition();
+  Vec2 pos1 = sprite1->getPosition();
+  Vec2 pos2 = sprite2->getPosition();
 
-    float duration = 0.2f;
+  float duration = 0.2f;
 
-    auto move1 = MoveTo::create(duration, pos2);
-    auto move2 = MoveTo::create(duration, pos1);
+  auto move1 = EaseInOut::create(MoveTo::create(duration, pos2), 2.0f);
+  auto move2 = EaseInOut::create(MoveTo::create(duration, pos1), 2.0f);
 
-    auto ease1 = EaseInOut::create(move1, 2.0f);
-    auto ease2 = EaseInOut::create(move2, 2.0f);
+  auto callback = CallFunc::create([=]() {
+    std::swap(_gemSprites[r1][c1], _gemSprites[r2][c2]);
 
-    auto callback = CallFunc::create([=]() {
+    _field.swaped(r1, c1, r2, c2);
 
-        // 💡 Меняем спрайты местами в массиве
-        std::swap(_gemSprites[r1][c1], _gemSprites[r2][c2]);
+    std::vector<std::vector<bool>> matches;
 
-        // 💡 Теперь обновляем модель
-        _field.swaped(r1, c1, r2, c2);
+    if (_field.findMatches(matches)) {
+      animateMatches(matches);
 
-        bool hasMatches = _field.processMatches();
+    } else {
+      animateSwapBack(r1, c1, r2, c2);
+    }
+  });
 
-        if (!hasMatches) {
-            // ❗ если нет матчей — делаем обратную анимацию
-            animateSwapBack(r1, c1, r2, c2);
-        } else {
-            _isAnimating = false;
-            redrawGrid(); // потом уже падения и т.д.
-        }
-    });
-
-    sprite1->runAction(ease1);
-    sprite2->runAction(Sequence::create(ease2, callback, nullptr));
+  sprite1->runAction(move1);
+  sprite2->runAction(Sequence::create(move2, callback, nullptr));
 }
 
-void GameScene::animateSwapBack(int r1, int c1, int r2, int c2)
-{
-    auto sprite1 = _gemSprites[r1][c1];
-    auto sprite2 = _gemSprites[r2][c2];
+void GameScene::animateSwapBack(int r1, int c1, int r2, int c2) {
+  auto sprite1 = _gemSprites[r1][c1];
+  auto sprite2 = _gemSprites[r2][c2];
 
-    Vec2 pos1 = sprite1->getPosition();
-    Vec2 pos2 = sprite2->getPosition();
+  Vec2 pos1 = sprite1->getPosition();
+  Vec2 pos2 = sprite2->getPosition();
 
-    float duration = 0.2f;
+  float duration = 0.2f;
 
-    auto move1 = MoveTo::create(duration, pos2);
-    auto move2 = MoveTo::create(duration, pos1);
+  auto move1 = MoveTo::create(duration, pos2);
+  auto move2 = MoveTo::create(duration, pos1);
 
-    auto callback = CallFunc::create([=]() {
+  auto callback = CallFunc::create([=]() {
+    // возвращаем обратно
+    std::swap(_gemSprites[r1][c1], _gemSprites[r2][c2]);
+    _field.swaped(r1, c1, r2, c2);
 
-        // возвращаем обратно
-        std::swap(_gemSprites[r1][c1], _gemSprites[r2][c2]);
-        _field.swaped(r1, c1, r2, c2);
+    _isAnimating = false;
+    redrawGrid();
+  });
 
-        _isAnimating = false;
-        redrawGrid();
-    });
-
-    sprite1->runAction(move1);
-    sprite2->runAction(Sequence::create(move2, callback, nullptr));
+  sprite1->runAction(move1);
+  sprite2->runAction(Sequence::create(move2, callback, nullptr));
 }
 
 GameScene::GameScene() {
