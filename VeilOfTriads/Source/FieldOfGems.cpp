@@ -4,7 +4,7 @@
 #include <random>
 #include <vector>
 
-FieldOfGems::FieldOfGems() : field(20, std::vector<char>(10, '.')) {
+FieldOfGems::FieldOfGems() : field(10, std::vector<char>(10, '.')) {
   generateStartField();
   processMatches();
 }

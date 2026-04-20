@@ -24,6 +24,7 @@
  ****************************************************************************/
 
 #include "GameScene.h"
+#include "MainScene.h"
 
 #include <cmath>
 
@@ -61,6 +62,10 @@ bool GameScene::init() {
   auto safeArea = _director->getSafeAreaRect();
   auto safeOrigin = safeArea.origin;
 
+  // Field range
+  _gridRows = static_cast<int>(_field.readField().size());
+  _gridCols = static_cast<int>(_field.readField()[0].size());
+
   /////////////////////////////
   // 2. add a menu item with "X" image, which is clicked to quit the program
   //    you may modify it.
@@ -81,12 +86,14 @@ bool GameScene::init() {
 
     // add the sprite as a child to this layer
     this->addChild(sprite, 0);
+    /*
     auto drawNode = DrawNode::create();
     drawNode->setPosition(Vec2(0, 0));
     addChild(drawNode);
 
     drawNode->drawRect(safeArea.origin + Vec2(1, 1),
                        safeArea.origin + safeArea.size, Color4F::BLUE);
+    */
   }
 
   /////////////////////////////
@@ -123,17 +130,53 @@ bool GameScene::init() {
       AX_CALLBACK_2(GameScene::onKeyReleased, this);
   _eventDispatcher->addEventListenerWithFixedPriority(_keyboardListener, 11);
 
+  /////////////////////////////
+  // add a menu item to go in another scene
+
+  // add a "back" icon
+  auto backItem =
+      MenuItemImage::create("res/UI/button.png", "res/UI/button.png",
+                            AX_CALLBACK_1(GameScene::goToMainScene, this));
+
+  if (backItem == nullptr || backItem->getContentSize().width <= 0 ||
+      backItem->getContentSize().height <= 0) {
+    problemLoading("'res/UI/button.png' and 'res/UI/button.png'");
+  } else {
+    float x = visibleSize.width - backItem->getContentSize().width - 50;
+    float y = 0 + backItem->getContentSize().height + 50; //visibleSize.height;
+    backItem->setPosition(Vec2(x, y));
+
+    // Создаём текст
+    auto label = Label::createWithTTF("Back to title", "fonts/PixelGameFont.ttf", 10);
+
+    if (label) {
+      label->setPosition(Vec2(backItem->getContentSize().width / 2,
+                              backItem->getContentSize().height / 2));
+
+      label->setColor(Color3B::WHITE);
+
+      backItem->addChild(label, 1);
+    }
+  }
+
+  backItem->setScale(2.0f);
+
+  // Create button
+  auto menuNext = Menu::create(backItem, NULL);
+  menuNext->setPosition(Vec2::ZERO);
+  this->addChild(menuNext, 1);
+
   // add a label shows "Hello World"
   // create and initialize a label
 
-  auto label = Label::createWithTTF("Score : 0", "fonts/PixelGameFont.ttf", 24);
+  auto label = Label::createWithTTF("Score : 0", "fonts/PixelGameFont.ttf", 36);
   if (label == nullptr) {
     problemLoading("'fonts/PixelGameFont.ttf'");
   } else {
     // position the label on the center of the screen
     label->setPosition(
-        Vec2(origin.x + visibleSize.width / 2,
-             origin.y + visibleSize.height - label->getContentSize().height));
+        Vec2(origin.x + visibleSize.width / 2 - 520,
+             origin.y + visibleSize.height - label->getContentSize().height - 130));
 
     // add the label as a child to this layer
     this->addChild(label, 1);
@@ -346,6 +389,12 @@ void GameScene::menuCloseCallback(ax::Object* sender) {
 
   // EventCustom customEndEvent("game_scene_close_event");
   //_eventDispatcher->dispatchEvent(&customEndEvent);
+}
+
+void GameScene::goToMainScene(ax::Object* sender)
+{
+  auto mainScene = utils::createInstance<MainScene>();
+  _director->replaceScene(mainScene);
 }
 
 static std::string getGemImagePath(char gemChar) {

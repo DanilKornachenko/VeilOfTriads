@@ -59,6 +59,7 @@ class GameScene : public ax::Scene {
 
   // a selector callback
   void menuCloseCallback(ax::Object* sender);
+  void goToMainScene(ax::Object* sender);
 
   GameScene();
   ~GameScene() override;
@@ -74,8 +75,9 @@ class GameScene : public ax::Scene {
   ax::Node* _gridContainer = nullptr;
   std::vector<std::vector<ax::Sprite*>> _gemSprites;
   FieldOfGems _field;
-  int _gridRows = 20;
-  int _gridCols = 10;
+  // init configure
+  int _gridRows;
+  int _gridCols;
   float _cellSize = 0.0f;
   ax::Vec2 _gridStartPos;  // Левый нижний угол сетки
   int _selectedRow = -1;
