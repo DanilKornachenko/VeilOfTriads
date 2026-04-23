@@ -88,6 +88,7 @@ class GameScene : public ax::Scene {
   ax::Vec2 _touchStart;
   bool _swipeHandled = false;
   bool soundPlayed = false;
+  ax::Sprite* _soundIcon;
 
   void setupGrid();
   void redrawGrid();

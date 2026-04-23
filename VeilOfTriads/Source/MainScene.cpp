@@ -26,6 +26,8 @@
 #include "MainScene.h"
 
 #include "GameScene.h"
+#include "SoundManager.h"
+#include "audio/AudioEngine.h"
 
 using namespace ax;
 
@@ -53,12 +55,15 @@ bool MainScene::init() {
   auto safeArea = _director->getSafeAreaRect();
   auto safeOrigin = safeArea.origin;
 
+  SoundManager::preload();
+  SoundManager::playMusic();
+
   /////////////////////////////
   // 2. add a menu item with "X" image, which is clicked to quit the program
   //    you may modify it.
 
   /////////////////////////////
-  // add a menu item to go in another scene
+  // add a menu items
 
   // add a "next" icon
   auto nextItem =
@@ -92,6 +97,45 @@ bool MainScene::init() {
   auto menuNext = Menu::create(nextItem, NULL);
   menuNext->setPosition(Vec2::ZERO);
   this->addChild(menuNext, 1);
+
+  _soundIcon = Sprite::create(
+    SoundManager::isEnabled()
+        ? "res/UI/sound_icon1.png"
+        : "res/UI/sound_icon2.png"
+);
+
+  _soundIcon->setContentSize(Vec2(50, 50));
+  _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
+
+  _soundIcon->setPosition(Vec2(
+        50,
+        visibleSize.height - 50
+        ));
+
+  addChild(_soundIcon, 100);
+
+// Listener
+auto listener = EventListenerTouchOneByOne::create();
+
+listener->onTouchBegan = [=](Touch* touch, Event* event) {
+    if (_soundIcon->getBoundingBox().containsPoint(touch->getLocation())) {
+
+        bool enabled = !SoundManager::isEnabled();
+        SoundManager::setEnabled(enabled);
+
+        _soundIcon->setTexture(enabled ?
+            "res/UI/sound_icon1.png" :
+            "res/UI/sound_icon2.png");
+
+        _soundIcon->setContentSize(Vec2(50, 50));
+        _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
+
+        return true;
+    }
+    return false;
+};
+
+_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _soundIcon);
 
   /////////////////////////////
   // title

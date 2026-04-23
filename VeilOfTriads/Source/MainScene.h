@@ -69,4 +69,5 @@ class MainScene : public ax::Scene {
   ax::EventListenerKeyboard* _keyboardListener = nullptr;
   ax::EventListenerMouse* _mouseListener = nullptr;
   int _sceneID = 0;
+  ax::Sprite* _soundIcon = nullptr;
 };
