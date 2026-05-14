@@ -24,7 +24,6 @@
  ****************************************************************************/
 
 #include "GameScene.h"
-#include "MainScene.h"
 
 #include <cmath>
 
@@ -32,12 +31,13 @@
 #include "2d/ActionInterval.h"
 #include "Director.h"
 #include "FieldOfGems.h"
+#include "MainScene.h"
 #include "SoundManager.h"
 #include "audio/AudioEngine.h"
 
 using namespace ax;
 
-static int s_sceneID = 1000;
+static int s_sceneID = 1001;
 
 // Print useful error message instead of segfaulting when files are not there.
 static void problemLoading(const char* filename) {
@@ -87,14 +87,6 @@ bool GameScene::init() {
 
     // add the sprite as a child to this layer
     this->addChild(sprite, 0);
-    /*
-    auto drawNode = DrawNode::create();
-    drawNode->setPosition(Vec2(0, 0));
-    addChild(drawNode);
-
-    drawNode->drawRect(safeArea.origin + Vec2(1, 1),
-                       safeArea.origin + safeArea.size, Color4F::BLUE);
-    */
   }
 
   /////////////////////////////
@@ -144,11 +136,13 @@ bool GameScene::init() {
     problemLoading("'res/UI/button.png' and 'res/UI/button.png'");
   } else {
     float x = visibleSize.width - backItem->getContentSize().width - 50;
-    float y = 0 + backItem->getContentSize().height + 50; //visibleSize.height;
+    float y =
+        0 + backItem->getContentSize().height + 50;  // visibleSize.height;
     backItem->setPosition(Vec2(x, y));
 
     // Создаём текст
-    auto label = Label::createWithTTF("Back to title", "fonts/PixelGameFont.ttf", 10);
+    auto label =
+        Label::createWithTTF("Back to title", "fonts/PixelGameFont.ttf", 10);
 
     if (label) {
       label->setPosition(Vec2(backItem->getContentSize().width / 2,
@@ -167,45 +161,38 @@ bool GameScene::init() {
   menuNext->setPosition(Vec2::ZERO);
   this->addChild(menuNext, 1);
 
-  _soundIcon = Sprite::create(
-    SoundManager::isEnabled()
-        ? "res/UI/sound_icon1.png"
-        : "res/UI/sound_icon2.png"
-);
+  _soundIcon =
+      Sprite::create(SoundManager::isEnabled() ? "res/UI/sound_icon1.png"
+                                               : "res/UI/sound_icon2.png");
 
   _soundIcon->setContentSize(Vec2(50, 50));
   _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
 
-  _soundIcon->setPosition(Vec2(
-        50,
-        visibleSize.height - 50
-        ));
+  _soundIcon->setPosition(Vec2(50, visibleSize.height - 50));
 
   addChild(_soundIcon, 100);
 
-// Listener
-auto listener = EventListenerTouchOneByOne::create();
+  // Listener
+  auto listener = EventListenerTouchOneByOne::create();
 
-listener->onTouchBegan = [=](Touch* touch, Event* event) {
+  listener->onTouchBegan = [this](Touch* touch, Event* event) {
     if (_soundIcon->getBoundingBox().containsPoint(touch->getLocation())) {
+      bool enabled = !SoundManager::isEnabled();
+      SoundManager::setEnabled(enabled);
 
-        bool enabled = !SoundManager::isEnabled();
-        SoundManager::setEnabled(enabled);
+      _soundIcon->setTexture(enabled ? "res/UI/sound_icon1.png"
+                                     : "res/UI/sound_icon2.png");
 
-        _soundIcon->setTexture(enabled ?
-            "res/UI/sound_icon1.png" :
-            "res/UI/sound_icon2.png");
+      _soundIcon->setContentSize(Vec2(50, 50));
+      _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
 
-        _soundIcon->setContentSize(Vec2(50, 50));
-        _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
-
-        return true;
+      return true;
     }
     return false;
-};
+  };
 
-_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _soundIcon);
-
+  _eventDispatcher->addEventListenerWithSceneGraphPriority(listener,
+                                                           _soundIcon);
 
   // create and initialize a label
 
@@ -214,9 +201,10 @@ _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _soundIcon);
     problemLoading("'fonts/PixelGameFont.ttf'");
   } else {
     // position the label on the center of the screen
-    label->setPosition(
-        Vec2(origin.x + label->getContentSize().width,/*+ visibleSize.width / 2 - 520,*/
-             origin.y + visibleSize.height - label->getContentSize().height - 130));
+    label->setPosition(Vec2(
+        origin.x +
+            label->getContentSize().width, /*+ visibleSize.width / 2 - 520,*/
+        origin.y + visibleSize.height - label->getContentSize().height - 130));
 
     // add the label as a child to this layer
     this->addChild(label, 1);
@@ -247,16 +235,6 @@ Vec2 GameScene::touchToGridIndex(const Vec2& touchLocation) {
 void GameScene::onTouchesBegan(const std::vector<ax::Touch*>& touches,
                                ax::Event* event) {
   for (auto&& t : touches) {
-    /*
-    Vec2 location = t->getLocation();
-    Vec2 index = touchToGridIndex(location);
-    if (index.x >= 0 && index.y >= 0) {
-      int col = static_cast<int>(index.x);
-      int row = static_cast<int>(index.y);
-      handleCellClick(row, col);
-      AXLOGD("Touch at grid: col=%d, row=%d", col, row);
-    }
-    */
     _touchStart = t->getLocation();
     _swipeHandled = false;
   }
@@ -319,23 +297,7 @@ void GameScene::onTouchesEnded(const std::vector<ax::Touch*>& touches,
   }
 }
 
-bool GameScene::onMouseDown(Event* event) {
-  /*EventMouse* e = static_cast<EventMouse*>(event);
-  Vec2 location = e->getLocationInView();
-  location = _director->convertToGL(location);
-
-  Vec2 index = touchToGridIndex(location);
-  if (index.x >= 0 && index.y >= 0)
-  {
-    int col = static_cast<int>(index.x);
-    int row = static_cast<int>(index.y);
-    handleCellClick(row, col);
-    AXLOGD("Touch at grid: col=%d, row=%d", col, row);
-    printf("Touch at grid: col=%d, row=%d\n", col, row);
-  }
-  */
-  return true;
-}
+bool GameScene::onMouseDown(Event* event) { return true; }
 
 bool GameScene::onMouseUp(Event* event) {
   EventMouse* e = static_cast<EventMouse*>(event);
@@ -431,15 +393,15 @@ void GameScene::menuCloseCallback(ax::Object* sender) {
   //_eventDispatcher->dispatchEvent(&customEndEvent);
 }
 
-void GameScene::goToMainScene(ax::Object* sender)
-{
+void GameScene::goToMainScene(ax::Object* sender) {
   auto mainScene = utils::createInstance<MainScene>();
   _director->replaceScene(mainScene);
 }
 
 static std::string getGemImagePath(char gemChar) {
+  char base = FieldOfGems().getBaseGem(gemChar);
   std::string colorName;
-  switch (gemChar) {
+  switch (base) {
     case FieldOfGems::yellow:
       colorName = "yellow";
       break;
@@ -477,7 +439,35 @@ void GameScene::setupGrid() {
   // Создаём контейнеры для всех спрайтов
   _gridContainer = Node::create();
   _gridContainer->setPosition(Vec2::ZERO);
-  this->addChild(_gridContainer);
+  this->addChild(_gridContainer, 2);
+
+  // Фон клеток
+  auto board = DrawNode::create();
+
+  for (int r = 0; r < _gridRows; ++r) {
+    for (int c = 0; c < _gridCols; ++c) {
+      float x = _gridStartPos.x + c * _cellSize;
+      float y = _gridStartPos.y + r * _cellSize;
+
+      Vec2 rect[4] = {
+          Vec2(x, y),
+          Vec2(x + _cellSize, y),
+          Vec2(x + _cellSize, y + _cellSize),
+          Vec2(x, y + _cellSize),
+      };
+
+      // серый полупрозрачный фон
+      Color4F fillColor(0.35f, 0.35f, 0.35f, 0.45f);
+
+      // чёрная рамка
+      Color4F borderColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+      board->drawSolidPoly(rect, 4, fillColor);
+      board->drawPoly(rect, 4, true, borderColor);
+    }
+  }
+
+  this->addChild(board, 1);
 
   // Инициализируем двумерный вектор спрайтов
   _gemSprites.resize(_gridRows);
@@ -489,6 +479,16 @@ void GameScene::setupGrid() {
   redrawGrid();
 }
 
+static std::string getLightningPath(char gemChar) {
+  if (gemChar >= 'A' && gemChar <= 'Z')
+    return "res/lightning/lightning_horizontal.png";
+
+  if (gemChar >= '1' && gemChar <= '6')
+    return "res/lightning/lightning_vertical.png";
+
+  return "";
+}
+
 void GameScene::redrawGrid() {
   auto field = _field.readField();
 
@@ -496,98 +496,137 @@ void GameScene::redrawGrid() {
     for (int c = 0; c < _gridCols; ++c) {
       char gemChar = field[r][c];
       std::string imagePath = getGemImagePath(gemChar);
-      ax::Sprite* sprite = _gemSprites[r][c];
 
-      if (sprite == nullptr) {
-        if (!imagePath.empty()) {
-          sprite = ax::Sprite::create(imagePath);
-          if (sprite) {
-            float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
-            float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
-            sprite->setPosition(ax::Vec2(x, y));
-            float scaleX = _cellSize / sprite->getContentSize().width;
-            float scaleY = _cellSize / sprite->getContentSize().height;
-            sprite->setScale(scaleX, scaleY);
-            _gridContainer->addChild(sprite);
-            _gemSprites[r][c] = sprite;
-          }
-        }
-      } else {
-        // Обновляем позицию и текстуру существующего спрайта
-        float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
-        float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
-        sprite->setPosition(ax::Vec2(x, y));
+      auto sprite = _gemSprites[r][c];
 
-        if (imagePath.empty()) {
+      // пустая клетка
+      if (imagePath.empty()) {
+        if (sprite) {
+          sprite->stopAllActions();
           sprite->setVisible(false);
-        } else {
-          sprite->setVisible(true);
-          auto currentTex = sprite->getTexture();
-          if (!imagePath.empty()) {
-            auto newTex =
-                ax::Director::getInstance()->getTextureCache()->addImage(
-                    imagePath);
-            if (currentTex != newTex) {
-              sprite->setTexture(newTex);
-            }
-          }
-          float scaleX = _cellSize / sprite->getContentSize().width;
-          float scaleY = _cellSize / sprite->getContentSize().height;
-          sprite->setScale(scaleX, scaleY);
+        }
+        continue;
+      }
+
+      // создаём спрайт если его нет
+      if (!sprite) {
+        sprite = Sprite::create(imagePath);
+
+        if (!sprite) continue;
+
+        _gridContainer->addChild(sprite);
+        _gemSprites[r][c] = sprite;
+      }
+
+      // ---- reset состояния ----
+      sprite->stopAllActions();
+      sprite->setVisible(true);
+      sprite->setOpacity(255);
+      sprite->setRotation(0);
+      sprite->setScale(1.0f);
+
+      // ---- позиция ----
+      float x = _gridStartPos.x + c * _cellSize + _cellSize / 2;
+      float y = _gridStartPos.y + r * _cellSize + _cellSize / 2;
+      sprite->setPosition(Vec2(x, y));
+
+      // ---- текстура ----
+      auto newTex =
+          Director::getInstance()->getTextureCache()->addImage(imagePath);
+
+      if (sprite->getTexture() != newTex) {
+        sprite->setTexture(newTex);
+      }
+
+      // ---- scale ----
+      float scaleX = _cellSize / sprite->getContentSize().width;
+      float scaleY = _cellSize / sprite->getContentSize().height;
+      sprite->setScale(scaleX, scaleY);
+
+      // ---- lightning overlay ----
+      sprite->removeChildByName("lightning_overlay");
+
+      std::string lightningPath = getLightningPath(gemChar);
+
+      if (!lightningPath.empty()) {
+        auto overlay = Sprite::create(lightningPath);
+
+        if (overlay) {
+          overlay->setName("lightning_overlay");
+          overlay->setPosition(sprite->getContentSize() / 2);
+
+          overlay->setScale(
+              sprite->getContentSize().width / overlay->getContentSize().width,
+              sprite->getContentSize().height /
+                  overlay->getContentSize().height);
+
+          sprite->addChild(overlay, 10);
         }
       }
     }
   }
+
   updateSelectionHighlight();
 }
 
 void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
+  auto expandedMatches = _field.expandLightningMatches(matches);
+
   _isAnimating = true;
 
-  float duration = 0.2f;
+  const float duration = 0.2f;
   int animationsCount = 0;
 
-  int gainedScore = 0;
+  int gainedScore = calculateScoreFromMatches(expandedMatches);
 
   for (int r = 0; r < _gridRows; ++r) {
     for (int c = 0; c < _gridCols; ++c) {
-      if (matches[r][c] && _gemSprites[r][c]) {
-        auto sprite = _gemSprites[r][c];
+      if (!expandedMatches[r][c]) continue;
+      if (!_gemSprites[r][c]) continue;
 
-        if (!soundPlayed) {
-          SoundManager::playPop();
-          soundPlayed = true;
-        }
+      auto sprite = _gemSprites[r][c];
 
-        auto fade = FadeOut::create(duration);
-        auto scale = ScaleTo::create(duration, 0.0f);
-        auto spawn = Spawn::create(fade, scale, nullptr);
-
-        sprite->runAction(spawn);
-
-        animationsCount++;
-
-        gainedScore = calculateScoreFromMatches(matches);
+      if (!soundPlayed) {
+        SoundManager::playPop();
+        soundPlayed = true;
       }
+
+      // reset состояния
+      sprite->stopAllActions();
+      sprite->setVisible(true);
+      sprite->setOpacity(255);
+
+      float scaleX = _cellSize / sprite->getContentSize().width;
+      float scaleY = _cellSize / sprite->getContentSize().height;
+      sprite->setScale(scaleX, scaleY);
+
+      // анимация исчезновения
+      auto fade = FadeOut::create(duration);
+      auto scale = ScaleTo::create(duration, 0.0f);
+      auto spawn = Spawn::create(fade, scale, nullptr);
+
+      sprite->runAction(spawn);
+
+      animationsCount++;
     }
   }
 
-  soundPlayed = false;
-
-  auto callback = CallFunc::create([=]() {
+  auto callback = CallFunc::create([this, gainedScore, expandedMatches]() {
     _score += gainedScore;
     updateScoreLabel();
 
-    _field.removeMatches(matches);
+    _field.removeMatches(expandedMatches);
 
     for (int r = 0; r < _gridRows; ++r) {
       for (int c = 0; c < _gridCols; ++c) {
-        if (matches[r][c] && _gemSprites[r][c]) {
+        if (expandedMatches[r][c] && _gemSprites[r][c]) {
           _gemSprites[r][c]->removeFromParent();
           _gemSprites[r][c] = nullptr;
         }
       }
     }
+
+    soundPlayed = false;
 
     applyGravityWithAnimation();
   });
@@ -595,8 +634,7 @@ void GameScene::animateMatches(const std::vector<std::vector<bool>>& matches) {
   if (animationsCount == 0) {
     callback->execute();
   } else {
-    this->runAction(
-        Sequence::create(DelayTime::create(duration), callback, nullptr));
+    runAction(Sequence::create(DelayTime::create(duration), callback, nullptr));
   }
 }
 
@@ -633,7 +671,7 @@ void GameScene::applyGravityWithAnimation() {
     }
   }
 
-  auto callback = CallFunc::create([=]() { spawnNewGems(); });
+  auto callback = CallFunc::create([this]() { spawnNewGems(); });
 
   if (animationsCount == 0) {
     callback->execute();
@@ -683,7 +721,7 @@ void GameScene::spawnNewGems() {
     }
   }
 
-  auto callback = CallFunc::create([=]() { checkMatchesAgain(); });
+  auto callback = CallFunc::create([this]() { checkMatchesAgain(); });
 
   if (animationsCount == 0) {
     callback->execute();
@@ -697,6 +735,7 @@ void GameScene::checkMatchesAgain() {
   std::vector<std::vector<bool>> matches;
 
   if (_field.findMatches(matches)) {
+    redrawGrid();
     animateMatches(matches);
   } else {
     _isAnimating = false;
@@ -780,14 +819,43 @@ void GameScene::animateSwap(int r1, int c1, int r2, int c2) {
   auto move1 = EaseInOut::create(MoveTo::create(duration, pos2), 2.0f);
   auto move2 = EaseInOut::create(MoveTo::create(duration, pos1), 2.0f);
 
-  auto callback = CallFunc::create([=]() {
+  auto callback = CallFunc::create([this, r1, c1, r2, c2]() {
     std::swap(_gemSprites[r1][c1], _gemSprites[r2][c2]);
 
     _field.swaped(r1, c1, r2, c2);
 
     std::vector<std::vector<bool>> matches;
 
-    if (_field.findMatches(matches)) {
+    char g1 = _field.readField()[r1][c1];
+    char g2 = _field.readField()[r2][c2];
+
+    if (_field.isLightning(g1) || _field.isLightning(g2)) {
+      matches.assign(_gridRows, std::vector<bool>(_gridCols, false));
+
+      auto markLightning = [&](int r, int c, char gem) {
+        matches[r][c] = true;
+
+        // горизонтальная молния
+        if (gem >= 'A' && gem <= 'Z') {
+          for (int x = 0; x < _gridCols; ++x) matches[r][x] = true;
+        }
+
+        // вертикальная молния
+        if (gem >= '1' && gem <= '6') {
+          for (int y = 0; y < _gridRows; ++y) matches[y][c] = true;
+        }
+      };
+
+      markLightning(r1, c1, g1);
+      markLightning(r2, c2, g2);
+
+      redrawGrid();
+      animateMatches(matches);
+      return;
+    }
+
+    if (_field.findMatches(matches, r2, c2)) {
+      redrawGrid();
       animateMatches(matches);
 
     } else {
@@ -811,7 +879,7 @@ void GameScene::animateSwapBack(int r1, int c1, int r2, int c2) {
   auto move1 = MoveTo::create(duration, pos2);
   auto move2 = MoveTo::create(duration, pos1);
 
-  auto callback = CallFunc::create([=]() {
+  auto callback = CallFunc::create([this, r1, c1, r2, c2]() {
     // возвращаем обратно
     std::swap(_gemSprites[r1][c1], _gemSprites[r2][c2]);
     _field.swaped(r1, c1, r2, c2);

@@ -59,8 +59,7 @@ bool MainScene::init() {
   SoundManager::playMusic();
 
   /////////////////////////////
-  // 2. add a menu item with "X" image, which is clicked to quit the program
-  //    you may modify it.
+  // 2. add a menu item with "X" image
 
   /////////////////////////////
   // add a menu items
@@ -98,44 +97,38 @@ bool MainScene::init() {
   menuNext->setPosition(Vec2::ZERO);
   this->addChild(menuNext, 1);
 
-  _soundIcon = Sprite::create(
-    SoundManager::isEnabled()
-        ? "res/UI/sound_icon1.png"
-        : "res/UI/sound_icon2.png"
-);
+  _soundIcon =
+      Sprite::create(SoundManager::isEnabled() ? "res/UI/sound_icon1.png"
+                                               : "res/UI/sound_icon2.png");
 
   _soundIcon->setContentSize(Vec2(50, 50));
   _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
 
-  _soundIcon->setPosition(Vec2(
-        50,
-        visibleSize.height - 50
-        ));
+  _soundIcon->setPosition(Vec2(50, visibleSize.height - 50));
 
   addChild(_soundIcon, 100);
 
-// Listener
-auto listener = EventListenerTouchOneByOne::create();
+  // Listener
+  auto listener = EventListenerTouchOneByOne::create();
 
-listener->onTouchBegan = [=](Touch* touch, Event* event) {
+  listener->onTouchBegan = [=](Touch* touch, Event* event) {
     if (_soundIcon->getBoundingBox().containsPoint(touch->getLocation())) {
+      bool enabled = !SoundManager::isEnabled();
+      SoundManager::setEnabled(enabled);
 
-        bool enabled = !SoundManager::isEnabled();
-        SoundManager::setEnabled(enabled);
+      _soundIcon->setTexture(enabled ? "res/UI/sound_icon1.png"
+                                     : "res/UI/sound_icon2.png");
 
-        _soundIcon->setTexture(enabled ?
-            "res/UI/sound_icon1.png" :
-            "res/UI/sound_icon2.png");
+      _soundIcon->setContentSize(Vec2(50, 50));
+      _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
 
-        _soundIcon->setContentSize(Vec2(50, 50));
-        _soundIcon->setScale(50.0f / _soundIcon->getContentSize().width);
-
-        return true;
+      return true;
     }
     return false;
-};
+  };
 
-_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _soundIcon);
+  _eventDispatcher->addEventListenerWithSceneGraphPriority(listener,
+                                                           _soundIcon);
 
   /////////////////////////////
   // title
@@ -180,9 +173,6 @@ _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _soundIcon);
   _keyboardListener->onKeyReleased =
       AX_CALLBACK_2(MainScene::onKeyReleased, this);
   _eventDispatcher->addEventListenerWithFixedPriority(_keyboardListener, 11);
-
-  // add a label shows "Hello World"
-  // create and initialize a label
 
   auto sprite = Sprite::create("res/UI/background.png");
   if (sprite == nullptr) {

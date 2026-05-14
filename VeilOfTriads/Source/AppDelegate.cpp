@@ -65,6 +65,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     renderView = RenderViewImpl::createWithRect(
         "VeilOfTriads", ax::Rect(0, 0, designResolutionSize.width,
                                  designResolutionSize.height));
+    renderView->setIcon("res/Colored gems/red/gem_red_big_4x.png");
 #else
     renderView = RenderViewImpl::create("VeilOfTriads");
 #endif
