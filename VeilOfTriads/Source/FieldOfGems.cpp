@@ -33,6 +33,7 @@ int FieldOfGems::genRandomGemNum() {
 
 void FieldOfGems::generateStartField() {
   std::vector<gem> randomed_gems = {yellow, red, purple, orange, green, blue};
+  /*
   field = {
       {yellow, red, red, orange, green, blue, yellow, red, purple, orange},
       {red, red, orange, red, red, yellow, red, purple, orange, green},
@@ -44,14 +45,13 @@ void FieldOfGems::generateStartField() {
       {red, orange, orange, green, blue, red, purple, orange, green, blue},
       {orange, orange, green, blue, red, purple, orange, green, blue, yellow},
       {orange, green, blue, red, purple, orange, green, blue, yellow, red}};
-  /*
+  */
   for (auto& sub_field : field) {
     for (auto& cell : sub_field) {
       int idx = genRandomGemNum();
       cell = randomed_gems[idx];
     }
   }
-  */
 }
 
 bool FieldOfGems::findMatches(std::vector<std::vector<bool>>& outMatches,
